@@ -50,86 +50,136 @@ st.set_page_config(
 # ============================================================================
 CUSTOM_CSS = """
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap');
+
   /* ---- Reset & base ---- */
   #MainMenu, footer, header { visibility: hidden; }
-  .block-container { padding: 0.6rem 1.2rem 1rem 1.2rem !important; }
+  .block-container { padding: 0.75rem 1.4rem 1.4rem 1.4rem !important; max-width: 1480px; }
   html, body, [class*="css"] {
-      background-color: #070B14 !important;
+      background-color: #050811 !important;
       color: #E2E8F0 !important;
-      font-family: 'Inter', 'Segoe UI', sans-serif;
+      font-family: 'Inter', 'Segoe UI', sans-serif !important;
+  }
+  .stApp {
+      background:
+          radial-gradient(ellipse 80% 45% at 50% -8%, rgba(14, 165, 233, 0.14), transparent 65%),
+          linear-gradient(rgba(56, 189, 248, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(56, 189, 248, 0.025) 1px, transparent 1px),
+          #050811 !important;
+      background-size: 100% 100%, 40px 40px, 40px 40px, 100% 100% !important;
   }
 
   /* ---- Sidebar ---- */
   section[data-testid="stSidebar"] {
-      background: #0A1020 !important;
-      border-right: 1px solid #1E293B !important;
+      background: linear-gradient(180deg, #070C18 0%, #050811 100%) !important;
+      border-right: 1px solid rgba(56, 189, 248, 0.14) !important;
   }
   section[data-testid="stSidebar"] .block-container {
-      padding: 1rem !important;
+      padding: 1rem 1rem 1.5rem 1rem !important;
   }
 
-  /* ---- Header strip ---- */
+  /* ---- Top Mission Control Header ---- */
   .header-strip {
-      background: linear-gradient(135deg, #0F172A 0%, #0C1829 50%, #0F172A 100%);
-      border: 1px solid #1E3A5F;
-      border-radius: 12px;
-      padding: 18px 24px 14px 24px;
-      margin-bottom: 10px;
-      box-shadow: 0 0 40px rgba(6,182,212,0.08);
+      background: linear-gradient(135deg, rgba(11, 18, 34, 0.92) 0%, rgba(8, 20, 40, 0.88) 55%, rgba(11, 18, 34, 0.92) 100%);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-top: 2px solid #06B6D4;
+      border-radius: 14px;
+      padding: 18px 24px 16px 24px;
+      margin-bottom: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 36px rgba(6, 182, 212, 0.08);
+      position: relative;
+  }
+  .eyebrow-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: #38BDF8;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
   }
   .header-title {
-      font-size: 1.75rem;
-      font-weight: 800;
-      background: linear-gradient(90deg, #06B6D4, #38BDF8, #06B6D4);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.95rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #F8FAFC 0%, #38BDF8 48%, #06B6D4 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.6px;
+      line-height: 1.15;
   }
   .header-subtitle {
       font-size: 0.82rem;
-      color: #64748B;
-      margin-top: 2px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      color: #94A3B8;
+      margin-top: 4px;
+      letter-spacing: 0.4px;
   }
   .sensor-pill {
-      display: inline-block;
-      background: rgba(6,182,212,0.1);
-      border: 1px solid #164E63;
-      border-radius: 20px;
-      padding: 2px 10px;
-      font-size: 0.68rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 999px;
+      padding: 3px 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
       font-weight: 600;
-      color: #38BDF8;
+      color: #7DD3FC;
       letter-spacing: 0.8px;
       margin-right: 6px;
-      margin-top: 8px;
+      margin-top: 10px;
   }
-  .sensor-pill.active { border-color: #06B6D4; color: #06B6D4; }
+  .sensor-pill.active {
+      border-color: rgba(6, 182, 212, 0.55);
+      color: #22D3EE;
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.14);
+  }
+  .telemetry-badge {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: #94A3B8;
+      line-height: 1.55;
+  }
 
   /* ---- Value banner ---- */
   .value-banner {
-      background: linear-gradient(135deg, #1a0a00 0%, #1f1200 100%);
-      border: 1px solid #92400E;
-      border-left: 4px solid #F59E0B;
-      border-radius: 8px;
-      padding: 10px 16px;
-      margin: 6px 0 10px 0;
-      font-size: 0.82rem;
-      color: #FCD34D;
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.10) 0%, rgba(15, 23, 42, 0.85) 65%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      border-left: 3px solid #F59E0B;
+      border-radius: 10px;
+      padding: 11px 18px;
+      margin: 6px 0 14px 0;
+      font-size: 0.84rem;
+      color: #E2E8F0;
+      line-height: 1.5;
   }
-  .value-banner strong { color: #FBBF24; font-size: 0.88rem; }
+  .value-banner strong { color: #FBBF24; font-weight: 700; }
 
-  /* ---- KPI Cards ---- */
+  /* ---- KPI HUD Cards ---- */
   .kpi-card {
-      background: #0F172A;
-      border: 1px solid #1E293B;
-      border-radius: 12px;
-      padding: 16px 18px;
-      text-align: center;
+      background: linear-gradient(160deg, rgba(15, 23, 42, 0.88) 0%, rgba(8, 13, 26, 0.92) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 14px;
+      padding: 16px 18px 15px 18px;
+      text-align: left;
       position: relative;
       overflow: hidden;
-      transition: all 0.3s ease;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56, 189, 248, 0.38);
+      box-shadow: 0 12px 28px rgba(6, 182, 212, 0.12);
   }
   .kpi-card::before {
       content: '';
@@ -137,162 +187,193 @@ CUSTOM_CSS = """
       top: 0; left: 0; right: 0;
       height: 2px;
   }
-  .kpi-card.cyan::before  { background: linear-gradient(90deg, transparent, #06B6D4, transparent); }
-  .kpi-card.red::before   { background: linear-gradient(90deg, transparent, #EF4444, transparent); }
-  .kpi-card.amber::before { background: linear-gradient(90deg, transparent, #F59E0B, transparent); }
-  .kpi-card.green::before { background: linear-gradient(90deg, transparent, #22C55E, transparent); }
+  .kpi-card.cyan::before  { background: linear-gradient(90deg, #06B6D4, rgba(6,182,212,0.1)); }
+  .kpi-card.red::before   { background: linear-gradient(90deg, #EF4444, rgba(239,68,68,0.1)); }
+  .kpi-card.amber::before { background: linear-gradient(90deg, #F59E0B, rgba(245,158,11,0.1)); }
+  .kpi-card.green::before { background: linear-gradient(90deg, #22C55E, rgba(34,197,94,0.1)); }
 
   .kpi-value {
-      font-size: 2.0rem;
-      font-weight: 800;
-      line-height: 1;
-      margin: 6px 0;
+      font-family: 'Space Grotesk', 'JetBrains Mono', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      margin: 7px 0 5px 0;
+      letter-spacing: -0.5px;
   }
-  .kpi-value.cyan  { color: #06B6D4; }
-  .kpi-value.red   { color: #EF4444; }
-  .kpi-value.amber { color: #F59E0B; }
-  .kpi-value.green { color: #22C55E; }
+  .kpi-value.cyan  { color: #22D3EE; text-shadow: 0 0 18px rgba(34, 211, 238, 0.22); }
+  .kpi-value.red   { color: #F87171; text-shadow: 0 0 18px rgba(248, 113, 113, 0.22); }
+  .kpi-value.amber { color: #FBBF24; text-shadow: 0 0 18px rgba(251, 191, 36, 0.22); }
+  .kpi-value.green { color: #4ADE80; text-shadow: 0 0 18px rgba(74, 222, 128, 0.22); }
 
   .kpi-label {
-      font-size: 0.72rem;
-      color: #64748B;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.67rem;
+      color: #94A3B8;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.3px;
       font-weight: 600;
   }
   .kpi-delta {
-      font-size: 0.75rem;
+      font-size: 0.76rem;
+      color: #94A3B8 !important;
       margin-top: 4px;
   }
 
   /* ---- Section headers ---- */
   .section-head {
-      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
       color: #38BDF8;
       text-transform: uppercase;
       letter-spacing: 2px;
       font-weight: 700;
-      border-bottom: 1px solid #1E293B;
-      padding-bottom: 4px;
-      margin: 14px 0 8px 0;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.16);
+      padding-bottom: 6px;
+      margin: 14px 0 10px 0;
   }
 
   /* ---- Sidebar controls ---- */
   .stSelectbox label, .stSlider label, .stTextInput label,
   .stButton label, [data-testid="stWidgetLabel"] {
       color: #94A3B8 !important;
-      font-size: 0.78rem !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.72rem !important;
       font-weight: 600 !important;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.9px;
   }
   .stSelectbox > div > div {
-      background: #0F172A !important;
-      border: 1px solid #1E3A5F !important;
+      background: rgba(15, 23, 42, 0.9) !important;
+      border: 1px solid rgba(56, 189, 248, 0.25) !important;
       border-radius: 8px !important;
       color: #E2E8F0 !important;
   }
   .stTextInput > div > div > input {
-      background: #0F172A !important;
-      border: 1px solid #1E3A5F !important;
+      background: rgba(15, 23, 42, 0.9) !important;
+      border: 1px solid rgba(56, 189, 248, 0.25) !important;
       border-radius: 8px !important;
       color: #E2E8F0 !important;
   }
 
   /* ---- Buttons ---- */
-  .stButton > button {
-      background: linear-gradient(135deg, #0E7490, #0369A1) !important;
-      color: white !important;
-      border: none !important;
+  .stButton > button, .stDownloadButton > button {
+      background: linear-gradient(135deg, #0891B2, #0284C7) !important;
+      color: #F8FAFC !important;
+      border: 1px solid rgba(56, 189, 248, 0.45) !important;
       border-radius: 8px !important;
+      font-family: 'Space Grotesk', sans-serif !important;
       font-weight: 700 !important;
       font-size: 0.82rem !important;
-      letter-spacing: 0.5px !important;
+      letter-spacing: 0.6px !important;
       padding: 0.6rem 1.2rem !important;
       width: 100%;
-      box-shadow: 0 0 20px rgba(6,182,212,0.3) !important;
+      box-shadow: 0 4px 20px rgba(6, 182, 212, 0.25) !important;
       transition: all 0.2s ease !important;
   }
-  .stButton > button:hover {
-      box-shadow: 0 0 30px rgba(6,182,212,0.6) !important;
+  .stButton > button:hover, .stDownloadButton > button:hover {
+      box-shadow: 0 6px 28px rgba(6, 182, 212, 0.48) !important;
       transform: translateY(-1px) !important;
   }
 
   /* ---- Tables ---- */
-  .stDataFrame { border-radius: 8px; overflow: hidden; }
+  .stDataFrame { border-radius: 10px; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.16); }
   thead tr th {
-      background: #0F172A !important;
+      background: #0B1222 !important;
       color: #38BDF8 !important;
-      font-size: 0.72rem !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.7rem !important;
       text-transform: uppercase;
       letter-spacing: 1px;
   }
 
   /* ---- Tab styling ---- */
   .stTabs [data-baseweb="tab-list"] {
-      background: #0A1020 !important;
-      border-radius: 8px 8px 0 0;
-      gap: 0;
+      background: rgba(10, 16, 32, 0.85) !important;
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      border-radius: 10px;
+      padding: 4px;
+      gap: 6px;
   }
   .stTabs [data-baseweb="tab"] {
-      color: #64748B !important;
-      font-size: 0.78rem !important;
+      color: #94A3B8 !important;
+      font-family: 'Space Grotesk', sans-serif !important;
+      font-size: 0.8rem !important;
       font-weight: 600 !important;
-      letter-spacing: 0.5px;
-      padding: 10px 18px !important;
+      letter-spacing: 0.4px;
+      padding: 9px 18px !important;
+      border-radius: 7px !important;
   }
   .stTabs [aria-selected="true"] {
-      background: #0F172A !important;
-      color: #06B6D4 !important;
-      border-bottom: 2px solid #06B6D4 !important;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(14, 116, 144, 0.16)) !important;
+      color: #22D3EE !important;
+      border: 1px solid rgba(34, 211, 238, 0.35) !important;
   }
 
   /* ---- Folium map container ---- */
-  iframe { border-radius: 10px; border: 1px solid #1E293B !important; }
+  iframe {
+      border-radius: 14px !important;
+      border: 1px solid rgba(56, 189, 248, 0.24) !important;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;
+  }
 
   /* ---- Spinner / progress ---- */
   .stSpinner > div { border-top-color: #06B6D4 !important; }
 
   /* ---- Alert boxes ---- */
-  .stAlert { border-radius: 8px !important; }
+  .stAlert { border-radius: 10px !important; }
 
   /* ---- Plotly charts dark bg ---- */
-  .js-plotly-plot { border-radius: 10px; }
+  .js-plotly-plot {
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      background: rgba(11, 18, 34, 0.72);
+  }
 
   /* ---- Architecture card ---- */
   .arch-card {
-      background: #0F172A;
-      border: 1px solid #1E3A5F;
-      border-radius: 10px;
-      padding: 14px 18px;
+      background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(8, 13, 26, 0.92));
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 12px;
+      padding: 16px 18px;
       margin: 6px 0;
+      min-height: 138px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   }
-  .arch-card .module-name {
-      font-size: 0.88rem;
+  .arch-stage {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.64rem;
       font-weight: 700;
-      color: #06B6D4;
+      color: #38BDF8;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
       margin-bottom: 4px;
   }
-  .arch-card .module-desc {
-      font-size: 0.78rem;
-      color: #94A3B8;
-      line-height: 1.5;
+  .arch-card .module-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #F8FAFC;
+      margin-bottom: 6px;
   }
-  .arch-arrow {
-      text-align: center;
-      color: #38BDF8;
-      font-size: 1.2rem;
-      margin: 2px 0;
+  .arch-card .module-desc {
+      font-size: 0.79rem;
+      color: #94A3B8;
+      line-height: 1.55;
   }
 
   /* ---- Status indicator ---- */
+  @keyframes pulseGlow {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px #22C55E; }
+      50% { opacity: 0.55; box-shadow: 0 0 2px #22C55E; }
+  }
   .status-dot {
       display: inline-block;
       width: 7px; height: 7px;
       border-radius: 50%;
       background: #22C55E;
-      box-shadow: 0 0 6px #22C55E;
-      margin-right: 5px;
+      animation: pulseGlow 2s infinite;
+      margin-right: 6px;
   }
   .status-dot.warn { background: #F59E0B; box-shadow: 0 0 6px #F59E0B; }
 </style>
@@ -845,22 +926,26 @@ def main():
     lat, lon, hub_name, budget_cr, toggles = _render_sidebar()
 
     # --- Header ---
-    st.markdown("""
+    coord_str = f"{lat:.4f}°N · {lon:.4f}°E" if (lat is not None and lon is not None) else "STANDBY"
+    st.markdown(f"""
     <div class="header-strip">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
         <div>
+          <div class="eyebrow-tag">AEROMANIA '26 // ORBIT-TO-ECONOMY // TRACK A MISSION CONTROL</div>
           <div class="header-title">🛰️ UrbanPulse AI</div>
-          <div class="header-subtitle">Orbit-to-Economy Migration & Sprawl Intelligence · Track A</div>
-          <div style="margin-top:8px">
-            <span class="sensor-pill active">▲ SENTINEL-2 OPTICAL</span>
-            <span class="sensor-pill active">◈ SENTINEL-1 RADAR</span>
-            <span class="sensor-pill active">★ VIIRS NIGHT-LIGHTS</span>
-            <span class="sensor-pill active">⬡ OSM GRAPH</span>
+          <div class="header-subtitle">Multi-Sensor Orbital Intelligence for Urban Migration &amp; Infrastructure Planning</div>
+          <div style="margin-top:4px">
+            <span class="sensor-pill active">▲ SENTINEL-2 L2A</span>
+            <span class="sensor-pill active">◈ SENTINEL-1 SAR</span>
+            <span class="sensor-pill active">★ VIIRS / NIGHT-LIGHT</span>
+            <span class="sensor-pill active">⬡ OSM ARTERIAL GRAPH</span>
           </div>
         </div>
-        <div style="text-align:right;font-size:0.72rem;color:#475569;margin-top:4px">
-          Aeromania '26 · Boeing Judges<br>
-          <span style="color:#22C55E">◉ LIVE</span>  Planetary Computer STAC
+        <div class="telemetry-badge">
+          <div><span class="status-dot"></span><span style="color:#4ADE80;font-weight:700">EO LINK NOMINAL</span></div>
+          <div>TARGET: <span style="color:#E2E8F0">{coord_str}</span></div>
+          <div>SWATH: <span style="color:#38BDF8">12×12 KM · 250M GRID</span></div>
+          <div style="color:#64748B">BOEING EXECUTIVE BRIEF</div>
         </div>
       </div>
     </div>
@@ -1101,15 +1186,16 @@ def main():
              "#14532D"),
         ]
 
+        cols_arch = st.columns(2)
         for i, (name, desc, border_color) in enumerate(arch_items):
-            st.markdown(f"""
-            <div class="arch-card" style="border-color:{border_color}">
-              <div class="module-name">{name}</div>
-              <div class="module-desc">{desc}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if i < len(arch_items) - 1:
-                st.markdown('<div class="arch-arrow">↓</div>', unsafe_allow_html=True)
+            with cols_arch[i % 2]:
+                st.markdown(f"""
+                <div class="arch-card" style="border-color:{border_color}">
+                  <div class="arch-stage">STAGE 0{i+1} // ORBIT-TO-ECONOMY</div>
+                  <div class="module-name">{name}</div>
+                  <div class="module-desc">{desc}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
         st.markdown("""
         <div style="margin-top:16px;background:#0F172A;border:1px solid #1E3A5F;border-radius:8px;
