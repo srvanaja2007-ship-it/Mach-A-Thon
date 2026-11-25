@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@layer base {
+  :root {
+    --bg-canvas: #070B14;
+    --surface-primary: #0E1524;
+    --surface-elevated: #141C2E;
+    --border-hairline: #1E2A40;
+    --text-primary: #F4F7FB;
+    --text-secondary: #9FB0C7;
+    --action-primary: #2563EB;
+    --accent-data: #22D3EE;
+    --accent-ai: #8B5CF6;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #070B14;
+    color: #F4F7FB;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  a:focus-visible {
+    outline: 2px solid #2563EB;
+    outline-offset: 2px;
+  }
+
+  .font-mono-tabular {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.glass-float {
+  background: rgba(14, 21, 36, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 42, 64, 0.9);
+}
+
+/* Crisp technical scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #070B14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2A40;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2C3D5B;
+}
+
+/* MapLibre popup override matching design tokens */
+.maplibregl-popup-content {
+  background: rgba(14, 21, 36, 0.94) !important;
+  color: #F4F7FB !important;
+  border: 1px solid rgba(30, 42, 64, 0.95) !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(12px);
+}
+.maplibregl-popup-tip {
+  border-top-color: rgba(14, 21, 36, 0.94) !important;
+  border-bottom-color: rgba(14, 21, 36, 0.94) !important;
+}
+
+@keyframes ribbonSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.animate-ribbon {
+  animation: ribbonSweep 1.2s ease-in-out infinite;
+}
