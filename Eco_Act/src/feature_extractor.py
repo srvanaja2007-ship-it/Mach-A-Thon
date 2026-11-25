@@ -1,29 +1,57 @@
 import numpy as np
 import cv2
 import pandas as pd
-from download_online_dataset import LANDMARKS, coord_to_pixel
 
-def extract_landmark_radiance(img, w=1024, h=1024, radius=24):
+
+def _get_landmark_pixels(lm, w, h, coord_fn=None):
+    if 'pixel_x' in lm and 'pixel_y' in lm:
+        return int(lm['pixel_x']), int(lm['pixel_y'])
+    if coord_fn is not None and 'lat' in lm and 'lon' in lm:
+        return coord_fn(lm['lat'], lm['lon'], w=w, h=h)
+    # Relative normalized coords [0..1]
+    if 'x_norm' in lm and 'y_norm' in lm:
+        return int(lm['x_norm'] * w), int(lm['y_norm'] * h)
+    return w // 2, h // 2
+
+
+def extract_landmark_radiance(img, w=1024, h=1024, radius=24, landmark_info=None):
     """
-    Extracts integrated radiant flux around each key economic landmark.
+    Extracts integrated radiant flux around each landmark if landmark_info is given,
+    and always extracts generic 5-zone spatial quadrant flux (Core + NW/NE/SW/SE).
     """
     results = {}
-    for lm in LANDMARKS:
-        px, py = coord_to_pixel(lm['lat'], lm['lon'], w=w, h=h)
-        x1 = max(0, px - radius)
-        x2 = min(w, px + radius + 1)
-        y1 = max(0, py - radius)
-        y2 = min(h, py + radius + 1)
 
-        patch = img[y1:y2, x1:x2]
-        flux = float(np.sum(patch))
-        mean_flux = float(np.mean(patch))
-        key = lm['name'].lower().replace(" ", "_").replace("/", "_").replace("-", "_")
-        results[f"flux_{key}"] = flux
-        results[f"mean_{key}"] = mean_flux
+    # Generic spatial sectors (works for ANY dataset without coordinates)
+    mid_y, mid_x = h // 2, w // 2
+    q_h, q_w = max(1, h // 4), max(1, w // 4)
+    sectors = {
+        'central_core': img[mid_y - q_h:mid_y + q_h, mid_x - q_w:mid_x + q_w],
+        'north_west':   img[:mid_y, :mid_x],
+        'north_east':   img[:mid_y, mid_x:],
+        'south_west':   img[mid_y:, :mid_x],
+        'south_east':   img[mid_y:, mid_x:],
+    }
+    for s_name, patch in sectors.items():
+        results[f"flux_{s_name}"] = float(np.sum(patch))
+        results[f"mean_{s_name}"] = float(np.mean(patch))
+
+    if landmark_info:
+        landmarks = landmark_info.get('landmarks', []) if isinstance(landmark_info, dict) else landmark_info
+        coord_fn = landmark_info.get('coord_to_pixel') if isinstance(landmark_info, dict) else None
+        scaled_r = max(4, int(radius * min(w, h) / 1024.0))
+        for lm in landmarks:
+            px, py = _get_landmark_pixels(lm, w, h, coord_fn)
+            x1, x2 = max(0, px - scaled_r), min(w, px + scaled_r + 1)
+            y1, y2 = max(0, py - scaled_r), min(h, py + scaled_r + 1)
+            patch = img[y1:y2, x1:x2]
+            key = lm['name'].lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+            results[f"flux_{key}"] = float(np.sum(patch))
+            results[f"mean_{key}"] = float(np.mean(patch)) if patch.size else 0.0
+
     return results
 
-def extract_geospatial_features(images, timestamps, years, months, lit_threshold=15.0, high_ind_threshold=70.0):
+
+def extract_geospatial_features(images, timestamps, years, months, lit_threshold=15.0, high_ind_threshold=70.0, landmark_info=None):
     """
     Extracts multi-scale geospatial radiance and development metrics for all time steps.
     """
@@ -31,7 +59,7 @@ def extract_geospatial_features(images, timestamps, years, months, lit_threshold
     records = []
     yy, xx = np.mgrid[0:H, 0:W]
 
-    print(f"[FeatureExtractor] Extracting spatial & radiant flux dynamics across {N} frames ({H}x{W})...")
+    print(f"[FeatureExtractor] Extracting spatial & radiant flux dynamics across {N} frames ({W}x{H})...")
 
     for i in range(N):
         img = images[i].astype(np.float32)
@@ -39,12 +67,10 @@ def extract_geospatial_features(images, timestamps, years, months, lit_threshold
         yr = years[i]
         mo = months[i]
 
-        # 1. Macro Radiance Metrics
         sol = float(np.sum(img))
         mean_rad = float(np.mean(img))
         max_rad = float(np.max(img))
 
-        # 2. Lit Area and Industrial Hotspots
         lit_mask = (img > lit_threshold).astype(np.uint8)
         lit_pixels = int(np.sum(lit_mask))
         lit_area_pct = float((lit_pixels / (H * W)) * 100.0)
@@ -52,13 +78,11 @@ def extract_geospatial_features(images, timestamps, years, months, lit_threshold
         high_ind_mask = (img > high_ind_threshold).astype(np.uint8)
         high_ind_pixels = int(np.sum(high_ind_mask))
 
-        # 3. Center of Mass (Spatial Trajectory / Expansion Drift)
         total_w = np.sum(img) + 1e-6
         com_x = float(np.sum(xx * img) / total_w)
         com_y = float(np.sum(yy * img) / total_w)
 
-        # 4. Landmark-Specific Flux
-        lm_flux = extract_landmark_radiance(img, w=W, h=H)
+        lm_flux = extract_landmark_radiance(img, w=W, h=H, landmark_info=landmark_info)
 
         row = {
             'timestamp': t_dec,
@@ -78,14 +102,12 @@ def extract_geospatial_features(images, timestamps, years, months, lit_threshold
 
     df = pd.DataFrame(records)
 
-    # 12-Month Moving Average to smooth out monsoon seasonality and sensor airglow
-    window = min(12, max(3, len(df) // 4))
+    window = min(12, max(1, len(df) // 3))
     df['sol_trend_smooth'] = df['sum_of_lights'].rolling(window=window, min_periods=1, center=True).mean()
     df['lit_area_smooth'] = df['lit_area_pct'].rolling(window=window, min_periods=1, center=True).mean()
 
-    # Growth rate
-    df['sol_yoy_growth_pct'] = df['sol_trend_smooth'].pct_change(periods=12) * 100.0
-    df['sol_yoy_growth_pct'] = df['sol_yoy_growth_pct'].fillna(0.0)
+    growth_period = min(12, max(1, len(df) - 1)) if len(df) > 1 else 1
+    df['sol_yoy_growth_pct'] = (df['sol_trend_smooth'].pct_change(periods=growth_period) * 100.0).fillna(0.0)
 
     return df
 

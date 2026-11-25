@@ -6,13 +6,35 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from download_online_dataset import LANDMARKS, coord_to_pixel
 
-def render_optical_vs_nightlights_comparison(optical_path, ntl_img, output_path):
+
+def _iter_landmark_pixels(landmark_info, w, h):
+    if not landmark_info:
+        return []
+    landmarks = landmark_info.get('landmarks', []) if isinstance(landmark_info, dict) else landmark_info
+    coord_fn = landmark_info.get('coord_to_pixel') if isinstance(landmark_info, dict) else None
+    pts = []
+    for lm in landmarks:
+        if 'pixel_x' in lm and 'pixel_y' in lm:
+            px, py = int(lm['pixel_x']), int(lm['pixel_y'])
+        elif coord_fn is not None and 'lat' in lm and 'lon' in lm:
+            px, py = coord_fn(lm['lat'], lm['lon'], w=w, h=h)
+        elif 'x_norm' in lm and 'y_norm' in lm:
+            px, py = int(lm['x_norm'] * w), int(lm['y_norm'] * h)
+        else:
+            continue
+        pts.append((lm['name'], px, py))
+    return pts
+
+
+def render_optical_vs_nightlights_comparison(optical_path, ntl_img, output_path, region_name="Tumkur", landmark_info=None):
     """
     Renders side-by-side comparison between daytime optical satellite imagery (with landmarks)
-    and nighttime satellite radiance (VIIRS).
+    and nighttime satellite radiance (VIIRS). Skips cleanly if optical_path is missing.
     """
+    if not optical_path or not os.path.exists(optical_path):
+        print(f"[Visualizer] Skipping optical comparison (no optical image at '{optical_path}').")
+        return
     opt_bgr = cv2.imread(optical_path)
     if opt_bgr is None:
         return
@@ -21,11 +43,9 @@ def render_optical_vs_nightlights_comparison(optical_path, ntl_img, output_path)
     ntl_colored = cv2.applyColorMap(np.clip(ntl_img, 0, 255).astype(np.uint8), cv2.COLORMAP_INFERNO)
     ntl_rgb = cv2.cvtColor(ntl_colored, cv2.COLOR_BGR2RGB)
 
-    # Draw landmarks on night light image too
-    for lm in LANDMARKS:
-        px, py = coord_to_pixel(lm['lat'], lm['lon'], w=ntl_img.shape[1], h=ntl_img.shape[0])
+    for name, px, py in _iter_landmark_pixels(landmark_info, ntl_img.shape[1], ntl_img.shape[0]):
         cv2.circle(ntl_rgb, (px, py), 5, (0, 255, 255), -1)
-        cv2.putText(ntl_rgb, lm['name'][:14], (px + 6, py - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+        cv2.putText(ntl_rgb, name[:14], (px + 6, py - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8), facecolor='#0d1117')
     ax1.imshow(opt_rgb)
@@ -33,10 +53,10 @@ def render_optical_vs_nightlights_comparison(optical_path, ntl_img, output_path)
     ax1.axis('off')
 
     ax2.imshow(ntl_rgb)
-    ax2.set_title("Nighttime Satellite Radiance (NASA VIIRS - Economic Activity)", color='#f0883e', fontsize=14, fontweight='bold', pad=10)
+    ax2.set_title("Nighttime Satellite Radiance (VIIRS - Economic Activity)", color='#f0883e', fontsize=14, fontweight='bold', pad=10)
     ax2.axis('off')
 
-    plt.suptitle("Tumkur District & Outskirts: Optical Ground Truth vs Satellite Night Lights (9x Area)", 
+    plt.suptitle(f"{region_name}: Optical Ground Truth vs Satellite Night Lights",
                  color='#f0f6fc', fontsize=16, fontweight='bold', y=0.96)
     plt.tight_layout()
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -44,12 +64,18 @@ def render_optical_vs_nightlights_comparison(optical_path, ntl_img, output_path)
     plt.close()
     print(f"[Visualizer] Saved Optical vs Nightlights comparison to: {output_path}")
 
-def render_plot_timeline(images_hist, years_hist, images_future, years_future, output_path):
+
+def render_plot_timeline(images_hist, years_hist, images_future, years_future, output_path, region_name="Tumkur", landmark_info=None):
     """
-    Renders multi-panel timeline comparing key historical years with future AI predictions.
+    Renders multi-panel timeline comparing representative historical years with future AI predictions.
     """
-    # Select sample representative years across the 10-year span
-    key_years = [2015, 2017, 2019, 2021, 2023, 2024]
+    unique_years = sorted(set(years_hist))
+    if len(unique_years) <= 6:
+        key_years = unique_years
+    else:
+        sel = np.linspace(0, len(unique_years) - 1, 6, dtype=int)
+        key_years = [unique_years[i] for i in sel]
+
     hist_sample_imgs = []
     hist_sample_labels = []
 
@@ -86,16 +112,14 @@ def render_plot_timeline(images_hist, years_hist, images_future, years_future, o
             ax.set_title(lbl, color=color, fontsize=12, fontweight='bold', pad=8)
             ax.axis('off')
 
-            # Draw landmark anchors
-            for lm in LANDMARKS[:5]:
-                px, py = coord_to_pixel(lm['lat'], lm['lon'], w=img.shape[1], h=img.shape[0])
+            for name, px, py in _iter_landmark_pixels(landmark_info, img.shape[1], img.shape[0])[:5]:
                 ax.plot(px, py, marker='o', markersize=4, color='#00ffcc')
                 if idx == total - 1 or idx == 0:
-                    ax.text(px + 6, py - 4, lm['name'][:12], color='#00ffcc', fontsize=7, fontweight='bold')
+                    ax.text(px + 6, py - 4, name[:12], color='#00ffcc', fontsize=7, fontweight='bold')
         else:
             ax.axis('off')
 
-    plt.suptitle("Tumkur Spatio-Temporal Development: 10-Year Satellite History & AI Forecast (9x Area)", 
+    plt.suptitle(f"{region_name} Spatio-Temporal Development: Satellite History & AI Forecast",
                  color='#f0f6fc', fontsize=16, fontweight='bold', y=0.98)
     plt.tight_layout()
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -103,9 +127,10 @@ def render_plot_timeline(images_hist, years_hist, images_future, years_future, o
     plt.close()
     print(f"[Visualizer] Saved timeline progression to: {output_path}")
 
-def render_plot_metrics(hist_df, pred_df, zones, output_path):
+
+def render_plot_metrics(hist_df, pred_df, zones, output_path, region_name="Tumkur", base_gddp=32000.0):
     """
-    Renders 4 analytical plots showing monthly SOL, GDDP forecast, landmark growth, and economic velocity.
+    Renders 4 analytical plots showing SOL, GDDP forecast, zone growth, and economic velocity.
     """
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 11), facecolor='#0d1117')
     for ax in [ax1, ax2, ax3, ax4]:
@@ -115,75 +140,68 @@ def render_plot_metrics(hist_df, pred_df, zones, output_path):
             spine.set_color('#30363d')
         ax.grid(True, linestyle='--', alpha=0.3, color='#8b949e')
 
-    # 1. 10-Year Monthly SOL & 12-Month Smooth Trend
     t_hist = hist_df['timestamp'].values
-    ax1.plot(t_hist, hist_df['sum_of_lights'], color='#30363d', alpha=0.6, label='Monthly Raw Flux')
-    ax1.plot(t_hist, hist_df['sol_trend_smooth'], color='#58a6ff', linewidth=2.5, label='12-Mo Seasonally Adjusted')
-    # Connect to prediction
+    ax1.plot(t_hist, hist_df['sum_of_lights'], color='#30363d', alpha=0.6, label='Raw Radiant Flux')
+    ax1.plot(t_hist, hist_df['sol_trend_smooth'], color='#58a6ff', linewidth=2.5, label='Smoothed Trend')
     last_t = t_hist[-1]
     last_sol = hist_df['sol_trend_smooth'].iloc[-1]
     pred_t = [last_t] + list(pred_df['year'].values)
     pred_sol = [last_sol] + list(pred_df['predicted_sum_of_lights'].values)
     ax1.plot(pred_t, pred_sol, color='#f0883e', linestyle='--', linewidth=2.5, label='AI Forecast Trend')
-    ax1.set_title("Radiant Flux (10-Year Monthly VIIRS + Forecast)", color='#f0f6fc', fontsize=12, fontweight='bold')
+    ax1.set_title("Radiant Flux (Historical VIIRS + AI Forecast)", color='#f0f6fc', fontsize=12, fontweight='bold')
     ax1.set_ylabel("Sum of Lights Flux", color='#8b949e')
     ax1.legend(facecolor='#161b22', edgecolor='#30363d', labelcolor='#f0f6fc')
 
-    # 2. Estimated Tumkur GDDP (₹ Crores)
-    base_sol = hist_df['sol_trend_smooth'].iloc[0]
-    hist_gddp = 32000.0 * ((hist_df['sol_trend_smooth'] / base_sol) ** 0.75)
+    base_sol = max(1.0, hist_df['sol_trend_smooth'].iloc[0])
+    hist_gddp = base_gddp * ((hist_df['sol_trend_smooth'] / base_sol) ** 0.75)
     ax2.plot(t_hist, hist_gddp, color='#3fb950', linewidth=2.5, label='Nowcasted GDDP (₹ Cr)')
     pred_gddp = [hist_gddp.iloc[-1]] + list(pred_df['predicted_gddp_crores'].values)
     ax2.plot(pred_t, pred_gddp, color='#d29922', linestyle='--', linewidth=2.5, label='AI Projected GDDP')
-    
+
     ci_low = [hist_gddp.iloc[-1]] + list(pred_df['confidence_interval_low_gddp'].values)
     ci_high = [hist_gddp.iloc[-1]] + list(pred_df['confidence_interval_high_gddp'].values)
     ax2.fill_between(pred_t, ci_low, ci_high, color='#d29922', alpha=0.2, label='95% Confidence Band')
-    ax2.set_title("Estimated Tumkur Output / GDDP (₹ Crores)", color='#f0f6fc', fontsize=12, fontweight='bold')
+    ax2.set_title(f"Estimated {region_name} Output / GDDP (₹ Crores)", color='#f0f6fc', fontsize=12, fontweight='bold')
     ax2.set_ylabel("₹ in Crores", color='#8b949e')
     ax2.legend(facecolor='#161b22', edgecolor='#30363d', labelcolor='#f0f6fc')
 
-    # 3. Landmark Economic Growth Velocity (% Increase)
     top_zones = zones[:6]
-    names = [z['name'][:18] for z in top_zones][::-1]
+    names = [z['name'][:22] for z in top_zones][::-1]
     growths = [z['growth_pct'] for z in top_zones][::-1]
-    colors = ['#3fb950' if g > 25 else '#58a6ff' for g in growths]
+    colors = ['#3fb950' if g > 20 else '#58a6ff' for g in growths]
     ax3.barh(names, growths, color=colors, height=0.6)
-    ax3.set_title("Projected Growth Velocity by Landmark Hub (%)", color='#f0f6fc', fontsize=12, fontweight='bold')
+    ax3.set_title("Projected Growth Velocity by Zone (%)", color='#f0f6fc', fontsize=12, fontweight='bold')
     ax3.set_xlabel("% Projected Radiance Expansion", color='#8b949e')
 
-    # 4. Economic Activity Index
-    hist_idx = (hist_gddp / 32000.0) * 35.0
+    hist_idx = (hist_gddp / base_gddp) * 35.0
     pred_idx = [hist_idx.iloc[-1]] + list(pred_df['economic_activity_index'].values)
     ax4.plot(t_hist, hist_idx, color='#bc8cff', linewidth=2.5, label='Historical Econ Index')
     ax4.plot(pred_t, pred_idx, color='#f778ba', linestyle='--', linewidth=2.5, label='Projected Index')
-    ax4.set_title("District Economic Activity Index (0 - 100)", color='#f0f6fc', fontsize=12, fontweight='bold')
+    ax4.set_title("Economic Activity Index (0 - 100)", color='#f0f6fc', fontsize=12, fontweight='bold')
     ax4.set_ylabel("Index Score", color='#8b949e')
     ax4.legend(facecolor='#161b22', edgecolor='#30363d', labelcolor='#f0f6fc')
 
-    plt.suptitle("Tumkur Economic Nowcasting & Growth Projections (10-Year Satellite Model)", color='#f0f6fc', fontsize=16, fontweight='bold')
+    plt.suptitle(f"{region_name} Economic Nowcasting & Growth Projections (Satellite AI Model)", color='#f0f6fc', fontsize=16, fontweight='bold')
     plt.tight_layout()
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     plt.savefig(output_path, dpi=200, facecolor=fig.get_facecolor(), edgecolor='none')
     plt.close()
     print(f"[Visualizer] Saved metrics forecast plot to: {output_path}")
 
-def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamps_hist, images_future, years_future, zones, optical_path, output_path):
+def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamps_hist, images_future, years_future, zones, optical_path, output_path, region_name="Tumkur", base_gddp=32000.0):
     """
     Creates standalone interactive HTML dashboard featuring:
-    - Side-by-side Optical Satellite View (with landmarks) vs Night Lights
-    - 120-Month Scrubbable Time Slider
+    - Side-by-side Optical Satellite View (or baseline frame) vs Night Lights
+    - Scrubbable Time Slider across historical + predicted frames
     - Live GDDP Nowcasting & Opportunity Zones table
     """
-    # Sample 24 representative monthly frames + all future frames to keep HTML size under 6 MB
-    sample_indices = np.linspace(0, len(images_hist) - 1, 24, dtype=int)
+    n_samples = min(24, len(images_hist))
+    sample_indices = np.linspace(0, len(images_hist) - 1, n_samples, dtype=int)
     sampled_imgs = [images_hist[i] for i in sample_indices]
-    sampled_timestamps = [timestamps_hist[i] for i in sample_indices]
-    sampled_labels = [f"{int(timestamps_hist[i])}-{int((timestamps_hist[i] % 1) * 12) + 1:02d}" for i in sample_indices]
+    sampled_labels = [f"{int(timestamps_hist[i])}-{int(round((timestamps_hist[i] % 1) * 12)) + 1:02d}" for i in sample_indices]
 
     for yr, fut_img in images_future:
         sampled_imgs.append(fut_img)
-        sampled_timestamps.append(float(yr))
         sampled_labels.append(f"{yr} (AI PREDICTED)")
 
     encoded_frames = []
@@ -193,21 +211,24 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
         _, buf = cv2.imencode('.jpg', colored, [cv2.IMWRITE_JPEG_QUALITY, 80])
         encoded_frames.append(base64.b64encode(buf).decode('utf-8'))
 
-    # Encode optical image with landmarks
-    opt_bgr = cv2.imread(optical_path)
+    has_optical = bool(optical_path and os.path.exists(optical_path))
+    opt_bgr = cv2.imread(optical_path) if has_optical else None
     if opt_bgr is not None:
         _, opt_buf = cv2.imencode('.jpg', opt_bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
         opt_b64 = base64.b64encode(opt_buf).decode('utf-8')
+        left_title = "Optical Daytime Satellite (Ground Truth)"
+        left_badge = "OPTICAL REFERENCE"
+        left_desc = f"Ground truth optical reference for {region_name}."
     else:
         opt_b64 = encoded_frames[0]
+        left_title = f"Baseline Night Lights ({sampled_labels[0]})"
+        left_badge = "BASELINE FRAME"
+        left_desc = f"Earliest baseline satellite frame for {region_name} to compare against forecast."
 
-    # Chart data
-    chart_years = [f"{int(t)}" if (t % 1) < 0.1 else "" for t in hist_df['timestamp']]
-    chart_years_clean = [f"{int(t)}-{int((t%1)*12)+1:02d}" for t in hist_df['timestamp']]
-    base_sol = hist_df['sol_trend_smooth'].iloc[0]
-    hist_gddp = list(np.round(32000.0 * ((hist_df['sol_trend_smooth'] / base_sol) ** 0.75), 1))
+    chart_years_clean = [f"{int(t)}-{int(round((t % 1) * 12)) + 1:02d}" for t in hist_df['timestamp']]
+    base_sol = max(1.0, hist_df['sol_trend_smooth'].iloc[0])
+    hist_gddp = list(np.round(base_gddp * ((hist_df['sol_trend_smooth'] / base_sol) ** 0.75), 1))
 
-    # Add predicted points
     future_labels_chart = [str(yr) for yr in years_future]
     future_gddp_chart = list(np.round(pred_df['predicted_gddp_crores'], 1))
 
@@ -216,11 +237,15 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
 
     latest_gddp = total_gddp[-1]
     baseline_gddp = total_gddp[0]
-    gddp_growth = round(((latest_gddp - baseline_gddp) / baseline_gddp) * 100.0, 1)
+    gddp_growth = round(((latest_gddp - baseline_gddp) / max(1.0, baseline_gddp)) * 100.0, 1)
+    start_yr = int(hist_df['year'].iloc[0])
+    end_yr = int(hist_df['year'].iloc[-1])
+    fut_end_yr = int(years_future[-1])
+    res_h, res_w = images_hist.shape[1], images_hist.shape[2]
 
     zones_html = ""
-    for z in zones[:7]:
-        color_class = "badge-success" if z['growth_pct'] > 25 else "badge-warning"
+    for z in zones[:8]:
+        color_class = "badge-success" if z['growth_pct'] > 20 else "badge-warning"
         zones_html += f"""
         <tr>
             <td><strong>{z['name']}</strong></td>
@@ -365,44 +390,43 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
 
     <div class="header">
         <div>
-            <h1>Orbit to Economy: Tumkur & Outskirts (9x Area Spatio-Temporal AI)</h1>
-            <p>10-Year Satellite Night Lights (NASA VIIRS Monthly) vs High-Res Optical Ground Truth & 2027 Projections</p>
+            <h1>Orbit to Economy: {region_name} (Spatio-Temporal AI)</h1>
+            <p>Satellite Night Lights (VIIRS) Economic Nowcasting &amp; {fut_end_yr} Projections</p>
         </div>
         <div class="badge-track">Track A: Read the Planet &bull; Boeing Aeromania '26</div>
     </div>
 
     <div class="grid">
         <div class="card">
-            <div class="card-label">Baseline GDDP (2015)</div>
-            <div class="card-value">₹32,000 Cr</div>
-            <div class="card-sub">State Survey Reference</div>
+            <div class="card-label">Baseline GDDP ({start_yr})</div>
+            <div class="card-value">₹{base_gddp:,.0f} Cr</div>
+            <div class="card-sub">Baseline Economic Reference</div>
         </div>
         <div class="card">
-            <div class="card-label">Nowcasted Output (2027 Projected)</div>
+            <div class="card-label">Nowcasted Output ({fut_end_yr} Projected)</div>
             <div class="card-value">₹{latest_gddp:,.0f} Cr</div>
-            <div class="card-sub">+{gddp_growth}% 10-Yr Expansion</div>
+            <div class="card-sub">+{gddp_growth}% Projected Expansion</div>
         </div>
         <div class="card">
-            <div class="card-label">Spatial Coverage (9x Area)</div>
-            <div class="card-value">13,200 km²</div>
-            <div class="card-sub">Tumkur Core + 9 Outskirt Hubs</div>
+            <div class="card-label">Spatial Grid Resolution</div>
+            <div class="card-value">{res_w} &times; {res_h} px</div>
+            <div class="card-sub">{region_name} ({len(zones)} Tracked Zones)</div>
         </div>
         <div class="card">
-            <div class="card-label">Monthly Satellite Depth</div>
-            <div class="card-value">120 Months</div>
-            <div class="card-sub">2015–2024 Time-Series</div>
+            <div class="card-label">Satellite Temporal Depth</div>
+            <div class="card-value">{len(images_hist)} Frames</div>
+            <div class="card-sub">{start_yr}–{end_yr} Time-Series</div>
         </div>
     </div>
 
-    <!-- Dual Comparison: Optical Ground Truth vs Night Light AI -->
+    <!-- Dual Comparison: Optical Ground Truth / Baseline vs Night Light AI -->
     <div class="comparison-layout">
-        <!-- Optical Satellite View with Landmarks -->
         <div class="viewer-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; color: var(--accent-blue);">Optical Daytime Satellite (Landmarks Ground Truth)</h3>
-                <span class="badge badge-info">ESRI HIGH-RES SATELLITE</span>
+                <h3 style="margin: 0; color: var(--accent-blue);">{left_title}</h3>
+                <span class="badge badge-info">{left_badge}</span>
             </div>
-            <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 10px 0;">Ground truth showing road networks, terrain, Vasanthanarasapura, NH-48 & outskirt towns.</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 10px 0;">{left_desc}</p>
             <img class="image-frame" src="data:image/jpeg;base64,{opt_b64}" alt="Optical Satellite with Landmarks">
             <p style="font-size: 11px; color: #8b949e; margin-top: 8px;">
                 Anchors: <strong>Tumkur Core (Center)</strong> | <strong>Vasanthanarasapura (NW)</strong> | <strong>Dabaspet & Nelamangala (SE Corridor)</strong> | <strong>Kunigal (South)</strong> | <strong>Tiptur & Gubbi (West)</strong> | <strong>Sira (North)</strong>
@@ -518,4 +542,166 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print(f"[Visualizer] Generated 10-Year interactive dashboard at: {output_path}")
+    print(f"[Visualizer] Generated interactive dashboard at: {output_path}")
+
+
+def generate_predictions_table_html(hist_df, pred_df, zones, output_path, region_name="Tumkur"):
+    """
+    Generates a standalone tabular HTML report of AI economic forecasts,
+    opportunity zone rankings, and actionable development suggestions.
+    """
+    start_yr = int(hist_df['year'].iloc[0])
+    end_yr = int(hist_df['year'].iloc[-1])
+    n_frames = len(hist_df)
+
+    # Table 1: Economic Forecast Rows
+    forecast_rows = ""
+    for _, row in pred_df.iterrows():
+        yr = int(row['year'])
+        gddp = row['predicted_gddp_crores']
+        low = row['confidence_interval_low_gddp']
+        high = row['confidence_interval_high_gddp']
+        eidx = row['economic_activity_index']
+        sol = row['predicted_sum_of_lights']
+        lit = row['predicted_lit_area_pct']
+        forecast_rows += f"""
+        <tr>
+          <td><strong>{yr}</strong></td>
+          <td class="num up">₹{gddp:,.0f} Cr</td>
+          <td class="num muted">₹{low:,.0f} Cr</td>
+          <td class="num muted">₹{high:,.0f} Cr</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="bar-wrap"><div class="bar-fill" style="width:{min(100, eidx):.1f}%;background:#58a6ff;"></div></div>
+              <span class="num">{eidx:.1f} / 100</span>
+            </div>
+          </td>
+          <td class="num">{sol:,.0f}</td>
+          <td class="num">{lit:.1f}%</td>
+          <td><span class="badge badge-blue">Forecast</span></td>
+        </tr>"""
+
+    # Table 2 & 3: Zone Rankings + AI Suggestions
+    max_growth = max([abs(z['growth_pct']) for z in zones], default=1.0) or 1.0
+    zone_rows = ""
+    suggestion_rows = ""
+    for idx, z in enumerate(zones[:10], start=1):
+        g = z['growth_pct']
+        bar_w = min(100.0, max(3.0, (abs(g) / max_growth) * 100.0))
+        if g > 20:
+            g_cls, bar_col, b_cls, prio = "up", "#3fb950", "badge-green", ("badge-green", "High")
+        elif g > 8:
+            g_cls, bar_col, b_cls, prio = "flat", "#d29922", "badge-yellow", ("badge-blue", "Medium")
+        else:
+            g_cls, bar_col, b_cls, prio = "down", "#8b949e", "badge-yellow", ("badge-yellow", "Advisory")
+
+        zone_rows += f"""
+        <tr>
+          <td class="num"><strong>#{idx}</strong></td>
+          <td><strong>{z['name']}</strong></td>
+          <td><span class="badge badge-purple">{z['type'].title()}</span></td>
+          <td class="num">{z['current_flux']:,.0f}</td>
+          <td class="num">{z['future_flux']:,.0f}</td>
+          <td class="num {g_cls}">{g:+.1f}%</td>
+          <td><div class="bar-wrap"><div class="bar-fill" style="width:{bar_w:.0f}%;background:{bar_col};"></div></div></td>
+          <td><span class="badge {b_cls}">{z['status']}</span></td>
+        </tr>"""
+
+        suggestion_rows += f"""
+        <tr>
+          <td class="num">{idx}</td>
+          <td><strong>{z['recommended_action']}</strong></td>
+          <td>{z['name']}</td>
+          <td class="num {g_cls}">{g:+.1f}% projected flux</td>
+          <td><span class="badge {prio[0]}">{prio[1]}</span></td>
+          <td>{z['status']}</td>
+        </tr>"""
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{region_name} – AI Predictions & Suggestions</title>
+<style>
+  :root {{
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --accent: #58a6ff; --green: #3fb950; --yellow: #d29922;
+    --red: #f85149; --text: #e6edf3; --muted: #8b949e;
+  }}
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; padding: 32px 24px; }}
+  h1 {{ font-size: 1.6rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }}
+  .subtitle {{ color: var(--muted); font-size: 0.85rem; margin-bottom: 32px; }}
+  .badge {{ display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }}
+  .badge-blue   {{ background: #1f3f6e; color: #58a6ff; }}
+  .badge-green  {{ background: #1a3a2a; color: #3fb950; }}
+  .badge-yellow {{ background: #3d2e00; color: #d29922; }}
+  .badge-purple {{ background: #2d1f4e; color: #bc8cff; }}
+  section {{ margin-bottom: 40px; }}
+  h2 {{ font-size: 1.05rem; font-weight: 600; border-left: 3px solid var(--accent); padding-left: 10px; margin-bottom: 14px; }}
+  .tbl-wrap {{ overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 0.875rem; }}
+  thead th {{ background: #1c2230; color: var(--muted); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.6px; padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }}
+  tbody tr {{ border-bottom: 1px solid #21272f; }}
+  tbody tr:last-child {{ border-bottom: none; }}
+  tbody tr:hover {{ background: #1c2230; }}
+  tbody td {{ padding: 11px 16px; vertical-align: middle; }}
+  .num {{ font-variant-numeric: tabular-nums; font-family: 'Cascadia Code', 'Consolas', monospace; }}
+  .muted {{ color: var(--muted); }}
+  .up {{ color: var(--green); font-weight: 600; }}
+  .down {{ color: var(--red); font-weight: 600; }}
+  .flat {{ color: var(--yellow); font-weight: 600; }}
+  .bar-wrap {{ width: 110px; background: #21272f; border-radius: 4px; height: 7px; }}
+  .bar-fill {{ height: 7px; border-radius: 4px; }}
+  footer {{ margin-top: 48px; color: var(--muted); font-size: 0.75rem; border-top: 1px solid var(--border); padding-top: 16px; }}
+</style>
+</head>
+<body>
+<h1>🛰️ {region_name} — AI Predictions &amp; Suggestions</h1>
+<p class="subtitle">Track A · Boeing Aeromania '26 · Auto-generated from {n_frames} satellite frames ({start_yr}–{end_yr})</p>
+
+<section>
+  <h2>📈 Economic Activity Forecast</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Year</th><th>Predicted GDDP</th><th>Lower Bound</th><th>Upper Bound</th><th>Econ Index</th><th>Sum of Lights</th><th>Lit Area</th><th>Status</th></tr>
+      </thead>
+      <tbody>{forecast_rows}</tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>🏭 Opportunity Zone Rankings</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Rank</th><th>Zone / Sector</th><th>Type</th><th>Current Flux</th><th>Projected Flux</th><th>Growth</th><th>Velocity</th><th>Classification</th></tr>
+      </thead>
+      <tbody>{zone_rows}</tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>💡 AI Suggestions — Development Priorities</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Recommended Action</th><th>Target Zone</th><th>Signal</th><th>Priority</th><th>Zone Status</th></tr>
+      </thead>
+      <tbody>{suggestion_rows}</tbody>
+    </table>
+  </div>
+</section>
+
+<footer>Generated by Spatio-Temporal Night-Light AI · Region: {region_name} · {n_frames} frames ({start_yr}–{end_yr})</footer>
+</body>
+</html>"""
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    print(f"[Visualizer] Generated predictions & suggestions table at: {output_path}")
