@@ -14,6 +14,7 @@ from backend.core.interfaces import (
 from backend.core.schemas import (
     AuditRecord,
     ClaimRecommendation,
+    DatasetProvenance,
     DecisionBundle,
     DisasterType,
     EventRequest,
@@ -113,6 +114,87 @@ class DemoSatelliteConnector(DataConnector):
 
     def fetch(self, event_req: EventRequest) -> dict[str, Any]:
         return build_scenario_raw_data(event_req)
+
+
+def build_raw_data_from_track_b(
+    event_req: EventRequest,
+    track_b_alert: dict[str, Any],
+    aerial_verification: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Translate a verified 19-field Track B edge alert into Track A's connector payload."""
+    base = build_scenario_raw_data(event_req)
+    peril = track_b_alert["detected_peril"]
+    peak_raw = float(track_b_alert["peak_hazard_intensity"])
+    peak_for_track_a = round(peak_raw / 100.0, 3) if peril == "cyclone" and peak_raw > 10.0 else peak_raw
+
+    zones = [dict(z) for z in base["zones"]]
+    existing_max = max((z["base_intensity"] for z in zones), default=1.0) or 1.0
+    intensity_ratio = peak_for_track_a / existing_max
+    existing_area = sum(z["area_km2"] for z in zones) or 1.0
+    target_area = max(0.5, float(track_b_alert["affected_area_km2"]))
+    area_ratio = target_area / existing_area
+
+    verified_conf = float(track_b_alert["inference_confidence"])
+    for z in zones:
+        z["base_intensity"] = round(max(0.05, z["base_intensity"] * intensity_ratio), 3)
+        z["area_km2"] = round(max(0.1, z["area_km2"] * area_ratio), 2)
+        z["confidence"] = round(min(0.99, max(0.50, (z["confidence"] * 0.3) + (verified_conf * 0.7))), 2)
+
+    sat_id = track_b_alert["satellite_id"]
+    ts_utc = track_b_alert["scene_timestamp_utc"]
+    model_hash = track_b_alert["model_version_hash"]
+    track_b_prov = DatasetProvenance(
+        dataset_name=f"{sat_id} Onboard Edge AI ({model_hash})",
+        provider="Track B LEO Edge Inference + 3-Tier Aerial Verification",
+        spatial_resolution="10 m (INT8 Vector + 0.04m LEO-GNSS)",
+        timestamp=ts_utc,
+        license="Track B Telemetry Contract v1",
+        confidence=verified_conf,
+        is_demo=False,
+        layer_id="hazard_extent",
+    )
+    provenance = {
+        "hazard": [track_b_prov, *base["provenance"]["hazard"]],
+        "exposure": list(base["provenance"]["exposure"]),
+    }
+
+    unit = "km/h (wind)" if peril == "cyclone" else ("dNBR" if peril == "wildfire" else "m (flood depth)")
+    base.update(
+        {
+            "id": f"trackb-{sat_id.lower()}-{peril}-{ts_utc.replace(':', '').replace('-', '')}",
+            "zones": zones,
+            "max_intensity_label": f"{peak_raw:.2f} {unit} (Track B {sat_id})",
+            "provenance": provenance,
+            "is_demo": False,
+            "track_b_alert": track_b_alert,
+            "aerial_verification": aerial_verification or {},
+        }
+    )
+    return base
+
+
+class TrackBEdgeDataConnector(DataConnector):
+    """Connector that ingests verified Track B satellite/HAPS/drone alerts into Track A."""
+
+    connector_id = "track-b-orbit-edge-connector"
+    provider = "ISRO EOS-04 / RISAT-1A Edge AI + Stratospheric HAPS + IP65 Drone"
+
+    def __init__(
+        self,
+        track_b_alert: dict[str, Any] | None = None,
+        aerial_verification: dict[str, Any] | None = None,
+    ) -> None:
+        self.track_b_alert = track_b_alert
+        self.aerial_verification = aerial_verification
+
+    def fetch(self, event_req: EventRequest) -> dict[str, Any]:
+        if self.track_b_alert is None:
+            return build_scenario_raw_data(event_req)
+        return build_raw_data_from_track_b(
+            event_req,
+            self.track_b_alert,
+            aerial_verification=self.aerial_verification,
+        )
 
 
 class BaseHazardModule(HazardModule):
@@ -1067,6 +1149,34 @@ class MultiStakeholderDecisionModule(DecisionWorkflowModule):
                 },
             )
         )
+
+        track_b_alert = payload.get("track_b_alert")
+        if isinstance(track_b_alert, dict):
+            action_code = track_b_alert.get("recommended_action_code", "manual_review")
+            trigger_st = track_b_alert.get("parametric_trigger_status", "none")
+            priority = track_b_alert.get("downlink_priority", "P2_ROUTINE")
+            audit_trail.insert(
+                0,
+                AuditRecord(
+                    audit_id=f"AUD-TRKB-{payload['id'].upper()[:16]}",
+                    timestamp=ts_now,
+                    actor=f"Track B Orbit Bridge ({track_b_alert.get('satellite_id', 'LEO-SAT')})",
+                    action=f"Track B Edge-Verified Action Executed: {action_code}",
+                    target_id=payload["id"],
+                    rationale=(
+                        f"Ingested {track_b_alert.get('insight_payload_bytes', 0)}-byte edge telemetry "
+                        f"[{priority} | trigger={trigger_st} | model={track_b_alert.get('model_version_hash', '')}] "
+                        f"with confidence {track_b_alert.get('inference_confidence', 0.0):.2f}."
+                    ),
+                    inputs_snapshot={
+                        "satellite_id": track_b_alert.get("satellite_id"),
+                        "recommended_action_code": action_code,
+                        "parametric_trigger_status": trigger_st,
+                        "downlink_priority": priority,
+                        "insight_payload_bytes": track_b_alert.get("insight_payload_bytes"),
+                    },
+                ),
+            )
 
         headline = (
             f"Release {fmt_inr(total_payout)} provisional insurance liquidity ({fast_tracked} fast-track) "
