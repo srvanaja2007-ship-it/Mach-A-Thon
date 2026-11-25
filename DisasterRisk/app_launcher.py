@@ -124,6 +124,10 @@ def run_cli_interactive():
     print("-" * 65)
 
 def main():
+    if "--track-b" in sys.argv:
+        from run_merged_disaster_pipeline import main as run_track_b_demo
+        run_track_b_demo()
+        return
     if "--cli" in sys.argv:
         run_cli_interactive()
         return

@@ -1,11 +1,11 @@
 @echo off
 setlocal
-title ClaimPulse — Satellite Disaster Risk & Economic Decision Engine
+title ClaimPulse — Satellite Disaster Risk ^& Economic Decision Engine
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo   ClaimPulse — Satellite Disaster Risk & Economic Decision Engine
+echo   ClaimPulse — Satellite Disaster Risk ^& Economic Decision Engine
 echo ===================================================================
 echo.
 
