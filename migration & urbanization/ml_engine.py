@@ -87,21 +87,29 @@ def _generate_labels(df: pd.DataFrame) -> np.ndarray:
     )
     labels[is_tech] = 0
 
-    # Zone 2 — night-light gap / migrant settlement
-    is_nlg = (
-        (df["delta_ndbi"] > 0.05) &
-        (df["viirs_dnb"] < 5.0) &
-        (df["road_dist_m"] > 800) &
-        (~is_green) &
-        (~is_tech)
-    )
-    labels[is_nlg] = 2
+    # Zone 2 — night-light gap / migrant settlement (percentile-ranked top ~12%
+    # of cells with high built-up growth + low nighttime illumination)
+    candidates = (~is_green) & (~is_tech)
+    if candidates.sum() > 0:
+        ndbi_pct = pd.Series(df["delta_ndbi"].values).rank(pct=True).values
+        dark_pct = 1.0 - pd.Series(df["viirs_dnb"].values).rank(pct=True).values
+        road_pct = pd.Series(df["road_dist_m"].values).rank(pct=True).values
+        nlg_score = 0.50 * ndbi_pct + 0.35 * dark_pct + 0.15 * road_pct
 
-    # Zone 3 fallback — undeveloped fringe (low built-up + dark)
+        # Target ~12% of total grid cells (within 10-15% band) among candidates
+        target_frac = min(0.12 * n / float(candidates.sum()), 0.85)
+        cutoff = np.percentile(nlg_score[candidates], 100.0 * (1.0 - target_frac))
+        is_nlg = candidates & (nlg_score >= cutoff)
+        labels[is_nlg] = 2
+    else:
+        is_nlg = np.zeros(n, dtype=bool)
+
+    # Zone 3 fallback — undeveloped fringe (low built-up + high vegetation)
     is_undeveloped = (
         (df["delta_ndbi"] <= 0.0) &
         (df["ndvi_2026"] > 0.25) &
-        (~is_green)
+        (~is_green) &
+        (~is_nlg)
     )
     labels[is_undeveloped] = 3
 
@@ -180,7 +188,8 @@ def train_forecaster(df: pd.DataFrame,
 
     # Heuristic physics-based sprawl risk target (0–1)
     road_pull       = 1.0 / (1.0 + df["road_dist_m"].values / 500.0)   # close roads → growth
-    nlg_attractor   = np.where(df["viirs_dnb"].values < 5.0, 1.0, 0.0) # dark areas attract informal
+    viirs_p35       = float(np.percentile(df["viirs_dnb"].values, 35))
+    nlg_attractor   = np.where(df["viirs_dnb"].values <= viirs_p35, 1.0, 0.0) # dark areas attract informal
     ndbi_momentum   = np.clip(df["delta_ndbi"].values * 5.0, 0, 1)      # built-up momentum
     green_penalty   = df["water_mask"].values                            # water/green → no growth
     neighbour_press = np.clip(neigh * 4.0, 0, 1)

@@ -374,14 +374,16 @@ def _build_map(plan: dict,
     m = folium.Map(
         location=[lat, lon],
         zoom_start=12,
+        max_zoom=16,
         tiles="CartoDB dark_matter",
         prefer_canvas=True,
     )
-    # Add satellite imagery toggle
+    # Add satellite imagery toggle (capped at max_zoom=19)
     folium.TileLayer(
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         attr="Esri",
         name="Satellite Imagery",
+        max_zoom=19,
         overlay=False,
         control=True,
     ).add_to(m)
@@ -804,11 +806,11 @@ def _render_sidebar() -> tuple[float, float, str, float, dict]:
         st.markdown('<div class="section-head">💰 Policy Simulator</div>', unsafe_allow_html=True)
         budget_cr = st.slider(
             "Early Intervention Budget (₹ Crore)",
-            min_value=10.0,
-            max_value=500.0,
-            value=80.0,
-            step=10.0,
-            format="₹ %.0f Cr",
+            min_value=10,
+            max_value=500,
+            value=50,
+            step=5,
+            format="₹ %d Cr",
             key="budget_slider",
         )
 
@@ -900,18 +902,23 @@ def main():
     # --- KPI Hero Cards ---
     st.markdown('<div class="section-head">📊 Mission-Critical KPIs</div>', unsafe_allow_html=True)
 
-    new_built  = plan.get("new_built_sqkm", 0)
-    n_nlg      = plan.get("n_nlg_alerts", 0)
-    influx     = plan.get("influx_2027_28", 0)
-    net_sav_cr = roi.get("net_savings_cr", 0)
-    net_sav_m  = roi.get("net_savings_usd_m", 0)
+    new_built   = plan.get("new_built_sqkm", 0)
+    n_nlg       = plan.get("n_nlg_alerts", 0)
+    nlg_area    = plan.get("nlg_area_sqkm", 0)
+    influx      = plan.get("influx_2027_28", 0)
+    influx_cov  = roi.get("influx_covered", 0)
+    unmit_inf   = roi.get("unmitigated_influx", influx)
+    sprawl_prev = roi.get("sprawl_prevented_sqkm", 0)
+    cov_pct     = roi.get("coverage_ratio", 0)
+    net_sav_cr  = roi.get("net_savings_cr", 0)
+    net_sav_m   = roi.get("net_savings_usd_m", 0)
 
     c1, c2, c3, c4 = st.columns(4)
     kpi_cards = [
-        (c1, "cyan",  f"{new_built:.1f} km²",          "New Built-Up Growth",         "2021 → 2026 expansion"),
-        (c2, "red",   f"{n_nlg:,}",                     "Night-Light Gap Alerts",      f"Underserved settlements"),
-        (c3, "amber", f"{influx/1000:.1f}K",            "2027–28 Predicted Influx",    "Migrant population influx"),
-        (c4, "green", f"₹{net_sav_cr:.0f} Cr / ${net_sav_m:.1f}M", "Net Planner Savings", "Act now vs. wait 3 yrs"),
+        (c1, "cyan",  f"{new_built:.1f} km²",                      "New Built-Up Growth",      f"Prevented Slum Sprawl: {sprawl_prev:.1f} km²"),
+        (c2, "red",   f"{n_nlg:,}",                                 "Night-Light Gap Alerts",   f"{nlg_area:.1f} km² underserved · {roi.get('n_funded', 0)} corridors"),
+        (c3, "amber", f"{unmit_inf/1000:.1f}K",                     "2027–28 Predicted Influx", f"Total {influx/1000:.1f}K · {influx_cov/1000:.1f}K sheltered"),
+        (c4, "green", f"₹{net_sav_cr:.0f} Cr / ${net_sav_m:.1f}M", "Net Planner Savings",      f"Act now vs. 3.4× retrofit · {cov_pct:.0f}% cov"),
     ]
     for col, color, val, label, delta in kpi_cards:
         with col:

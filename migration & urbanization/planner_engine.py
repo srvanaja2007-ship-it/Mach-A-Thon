@@ -260,13 +260,27 @@ def simulate_roi(ml_result: dict,
     if not corridors:
         return _empty_roi(early_budget_cr)
 
-    # Total natural cost of all corridors if built early
+    # Total natural cost of trunk corridors if built early
     total_natural_cost_cr = sum(c["cost_cr"] for c in corridors)
 
-    # Corridor coverage ratio with given budget
-    coverage_ratio = min(1.0, early_budget_cr / total_natural_cost_cr) if total_natural_cost_cr > 0 else 0.0
+    # Full-district early intervention program cost (trunk corridors + feeder
+    # transit, power substations/micro-grids & early land-reservation across
+    # all NLG & high-risk cells) — supports continuous scaling up to ₹500+ Cr
+    n_nlg = ml_result["n_nlg_alerts"]
+    nlg_area_sqkm = ml_result["nlg_area_sqkm"]
+    sprawl_prob = ml_result.get("sprawl_prob")
+    high_risk_cells = int((sprawl_prob > 0.5).sum()) if sprawl_prob is not None else n_nlg
+    district_program_cost_cr = max(
+        500.0,
+        total_natural_cost_cr,
+        n_nlg * 1.45 + high_risk_cells * 0.35,
+    )
 
-    # Select corridors that fit within budget (greedy by cost)
+    # District-wide coverage ratio scales smoothly across the full budget slider
+    coverage_ratio = min(1.0, early_budget_cr / district_program_cost_cr) if district_program_cost_cr > 0 else 0.0
+    effective_spend_cr = min(early_budget_cr, district_program_cost_cr)
+
+    # Select trunk corridors that fit within budget (greedy by cost)
     funded_corridors = []
     running_cost = 0.0
     for c in sorted(corridors, key=lambda x: x["cost_cr"]):
@@ -276,41 +290,43 @@ def simulate_roi(ml_result: dict,
 
     if not funded_corridors:
         funded_corridors = corridors[:1]
-        running_cost = funded_corridors[0]["cost_cr"]
+        running_cost = min(early_budget_cr, funded_corridors[0]["cost_cr"])
 
-    # Sprawl prevented
-    n_nlg = ml_result["n_nlg_alerts"]
-    nlg_area_sqkm = ml_result["nlg_area_sqkm"]
+    # Sprawl prevented (scales with district coverage)
     sprawl_prevented_sqkm = nlg_area_sqkm * coverage_ratio * 0.72   # 72% effectiveness
 
-    # New migrant pop influx covered
+    # New migrant pop influx covered vs. unmitigated
     influx = ml_result["influx_2027_28"]
     influx_covered = int(influx * coverage_ratio * 0.65)
+    unmitigated_influx = max(0, influx - influx_covered)
 
-    # Households connected
-    hh_connected = sum(c["served_hh"] for c in funded_corridors)
+    # Households connected (trunk corridors + scaled feeder micro-grid reach)
+    base_hh = sum(c["served_hh"] for c in funded_corridors)
+    feeder_hh = int(max(0.0, effective_spend_cr - running_cost) * 180)
+    hh_connected = base_hh + feeder_hh
 
-    # Cost if deferred 3 years (encroachment → retrofit)
-    deferred_cost_cr = running_cost * RETROFIT_MULTIPLIER
+    # Cost if deferred 3 years (encroachment → demolition & retrofit at 3.4x)
+    deferred_cost_cr = effective_spend_cr * RETROFIT_MULTIPLIER
 
     # Net savings
-    net_savings_cr  = round(deferred_cost_cr - running_cost, 2)
+    net_savings_cr  = round(deferred_cost_cr - effective_spend_cr, 2)
     net_savings_usd_m = round(net_savings_cr * CR_TO_INR / INR_TO_USD / USD_MIL, 2)
 
     # ROI ratio
-    roi_ratio = round(deferred_cost_cr / running_cost, 2) if running_cost > 0 else 0.0
+    roi_ratio = round(deferred_cost_cr / effective_spend_cr, 2) if effective_spend_cr > 0 else 0.0
 
     return {
         "early_budget_cr":       round(early_budget_cr, 1),
         "funded_corridors":      funded_corridors,
         "n_funded":              len(funded_corridors),
-        "total_funded_cost_cr":  round(running_cost, 2),
+        "total_funded_cost_cr":  round(effective_spend_cr, 2),
         "deferred_cost_cr":      round(deferred_cost_cr, 2),
         "net_savings_cr":        net_savings_cr,
         "net_savings_usd_m":     net_savings_usd_m,
         "roi_ratio":             roi_ratio,
         "sprawl_prevented_sqkm": round(sprawl_prevented_sqkm, 2),
         "influx_covered":        influx_covered,
+        "unmitigated_influx":    unmitigated_influx,
         "hh_connected":          hh_connected,
         "coverage_ratio":        round(coverage_ratio * 100, 1),
     }
