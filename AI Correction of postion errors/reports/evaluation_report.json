@@ -1,0 +1,61 @@
+{
+  "dataset": "Google Smartphone Decimeter Challenge (GSDC)",
+  "train_trips_count": 23,
+  "test_trips_count": 7,
+  "train_samples": 56672,
+  "test_samples": 17385,
+  "models": {
+    "xgboost": {
+      "raw_metrics": {
+        "rmse": 2.55068576206992,
+        "mean_error": 2.132511175329746,
+        "median_error": 1.7825048779496764,
+        "p75_error": 2.6801075859624355,
+        "p95_error": 5.173021476299839,
+        "max_error": 11.868933518716583,
+        "min_error": 0.06349725369630345,
+        "std_error": 1.399426290992117
+      },
+      "corr_metrics": {
+        "rmse": 2.119418904916405,
+        "mean_error": 1.7796284334453423,
+        "median_error": 1.6490440180951809,
+        "p75_error": 2.256526779730934,
+        "p95_error": 3.8421998033559763,
+        "max_error": 10.863461234182116,
+        "min_error": 0.00519390654774069,
+        "std_error": 1.151025253150395
+      },
+      "improvement_rmse_percent": 16.907878797407626,
+      "improvement_mean_percent": 16.547755808587407,
+      "improvement_median_percent": 7.487264775847832,
+      "improvement_p95_percent": 25.72619655729273
+    },
+    "random_forest": {
+      "raw_metrics": {
+        "rmse": 2.55068576206992,
+        "mean_error": 2.132511175329746,
+        "median_error": 1.7825048779496764,
+        "p75_error": 2.6801075859624355,
+        "p95_error": 5.173021476299839,
+        "max_error": 11.868933518716583,
+        "min_error": 0.06349725369630345,
+        "std_error": 1.399426290992117
+      },
+      "corr_metrics": {
+        "rmse": 2.0669603491116395,
+        "mean_error": 1.7338995762722673,
+        "median_error": 1.60324920715948,
+        "p75_error": 2.2233291751989763,
+        "p95_error": 3.7193726385491472,
+        "max_error": 10.613852480937844,
+        "min_error": 0.007884438663747294,
+        "std_error": 1.1251299232544496
+      },
+      "improvement_rmse_percent": 18.9645239782783,
+      "improvement_mean_percent": 18.692122398647783,
+      "improvement_median_percent": 10.056391598568021,
+      "improvement_p95_percent": 28.10057612191586
+    }
+  }
+}
