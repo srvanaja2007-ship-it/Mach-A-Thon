@@ -1,0 +1,4 @@
+Test Observations,Test Trajectories,Model,MAE (m),RMSE (m),Median Error (m),95th Percentile Error (m),RMSE Improvement (%)
+17385,7,Raw GPS (Observed),2.1315,2.5493,1.7827,5.1698,0.0
+17385,7,Random Forest,1.7336,2.0666,1.6022,3.7187,18.93
+17385,7,XGBoost,1.7793,2.119,1.6486,3.8394,16.88

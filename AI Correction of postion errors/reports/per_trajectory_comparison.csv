@@ -1,0 +1,8 @@
+tripId,observations,raw_rmse_m,rf_rmse_m,xgb_rmse_m,rf_rmse_imp_pct,xgb_rmse_imp_pct,better_model
+2020-07-24-US-MTV-1/GooglePixel4XL,2050,1.4586,1.8386,1.967,-26.05,-34.85,Random Forest
+2020-07-24-US-MTV-1/GooglePixel5,2059,1.3264,1.4005,1.4417,-5.58,-8.69,Random Forest
+2021-03-16-US-MTV-2/XiaomiMi8,2160,5.0438,3.5602,3.6566,29.41,27.5,Random Forest
+2021-04-02-US-SJC-1/GooglePixel5,2283,2.4635,1.6502,1.7687,33.01,28.2,Random Forest
+2021-07-01-US-MTV-1/GooglePixel5,2556,1.6267,1.9132,1.9087,-17.61,-17.33,XGBoost
+2021-08-24-US-SVL-1/GooglePixel5,3137,2.1419,1.7265,1.7282,19.4,19.32,Random Forest
+2021-08-24-US-SVL-1/SamsungGalaxyS20Ultra,3140,2.1887,1.8701,1.8842,14.56,13.91,Random Forest
