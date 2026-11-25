@@ -1,0 +1,43 @@
+{"logTime": "1125/223740", "correlationVector":"vmC944927pBFp2f3RTdhHi.1","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"Prod_southindia_prod-s01-004-apac-southindia", "migrationStage":"NotStarted", "server":"akswtt10800002x"}}
+{"logTime": "1125/223740", "correlationVector":"vmC944927pBFp2f3RTdhHi.2","action":"ProcessGetUpdates", "result":"Done", "context":{"dataType":"Encryption Keys", "deleted":"0", "process_failed_to_decrypt":"0", "process_pending_decryption":"0", "process_success":"1", "total":"1"}}
+{"logTime": "1125/223741", "correlationVector":"SCCi9WmFDgJT4Xn8pz7Ae4","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"", "migrationStage":"", "server":""}}
+{"logTime": "1125/223741", "correlationVector":"SCCi9WmFDgJT4Xn8pz7Ae4.0","action":"EncryptionKeysFetcher.DownloadKeys:", "result":"Success", "context":Key count: 3, Last key timestamp: 2026-11-14T14:02:10Z}
+{"logTime": "1125/223741", "correlationVector":"SCCi9WmFDgJT4Xn8pz7Ae4.1","action":"EncryptionKeysManager::SetEncryptionKeys:", "result":"Success", "context":Key names[3]:[BUZhqX9XuWywZhUyAHTzIDccP+pm+G5pVEYhzGD4u0LvdXEvtgX5fDHOJmSLyr9mYgPhj3ahM2AwCxPzzuF93A==][1PUzWIR98/B+/u7J2aa8ohwDHbn/YJWk6mNyX7g2H1iw03uZDELKzbJuCyIlrvQM1EcGx1J7VeYFmcroBlpOyg==][dy7kDHn+Z2g/dlNckrK2U3Ru+aGnz/IYQRlPJFrxE3JJ6bL5xX5uhwpMVZt41qDmoFEjMkdakpXpxUbcdLMj0w==]}
+{"logTime": "1125/223741", "correlationVector":"SCCi9WmFDgJT4Xn8pz7Ae4.2","action":"EncryptionKeysManager::SetEncryptionKeysWithTimestamps:", "result":"Success", "context":Key timestamps[3]:[2025-11-10T12:58:22Z][2026-05-17T01:33:29Z][2026-11-14T14:02:10Z]}
+{"logTime": "1125/223741", "correlationVector":"vmC944927pBFp2f3RTdhHi","action":"Initial GetUpdates", "result":"", "context":Reason: NEW_CLIENT. cV=vmC944927pBFp2f3RTdhHi}
+{"logTime": "1125/223741", "correlationVector":"vmC944927pBFp2f3RTdhHi.3","action":"GetUpdates Response", "result":"Success", "context":Received 1 update(s). cV=vmC944927pBFp2f3RTdhHi.0;server=akswtt10800002x;cloudType=Consumer;environment=Prod_southindia_prod-s01-004-apac-southindia;migrationStage=NotStarted}
+{"logTime": "1125/223741", "correlationVector":"+m/GzhXeCT2BWH/lV9bae9","action":"Normal GetUpdate request", "result":"", "context":cV=+m/GzhXeCT2BWH/lV9bae9
+Refresh requested types: Encryption Keys}
+{"logTime": "1125/223741", "correlationVector":"+m/GzhXeCT2BWH/lV9bae9.1","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"Prod_southindia_prod-s01-004-apac-southindia", "migrationStage":"NotStarted", "server":"akswtt10800002x"}}
+{"logTime": "1125/223741", "correlationVector":"+m/GzhXeCT2BWH/lV9bae9.2","action":"GetUpdates Response", "result":"Success", "context":Received 0 update(s). cV=+m/GzhXeCT2BWH/lV9bae9.0;server=akswtt10800002x;cloudType=Consumer;environment=Prod_southindia_prod-s01-004-apac-southindia;migrationStage=NotStarted}
+{"logTime": "1125/223741", "correlationVector":"6RqqJXdd6THepzRMYhj9ro","action":"DoCompareDataConsistency requsted types: ", "result":"Encryption Keys"}
+{"logTime": "1125/223741", "correlationVector":"6RqqJXdd6THepzRMYhj9ro.0","action":"CompareDataConsistency result: ", "result":"Compare result: Encryption Keys is consistent. local entities count is: 1 local entities hash is: nu5yBxXZFy8ipC9s5MfxjDhr5y4="}
+{"logTime": "1125/223741", "correlationVector":"","action":"DIAGNOSTIC_REQUEST|v1/diagnosticData/Diagnostic.SendCheckResult()|SUCCESS", "result":""}
+{"logTime": "1125/223808", "correlationVector":"","action":"Microsoft.Sync.State.UserActionableError.30Sec", "result":"Error:7"}
+{"logTime": "1125/223808", "correlationVector":"","action":"Microsoft.Sync.State.Sign.In.UserActionableError.30Sec", "result":"Error:7"}
+{"logTime": "1125/223838", "correlationVector":"","action":"Microsoft.Sync.State.UserActionableError.1Min", "result":"Error:7"}
+{"logTime": "1125/223838", "correlationVector":"","action":"Microsoft.Sync.State.Sign.In.UserActionableError.1Min", "result":"Error:7"}
+{"logTime": "1125/223938", "correlationVector":"","action":"Microsoft.Sync.State.UserActionableError.2Min", "result":"Error:7"}
+{"logTime": "1125/223938", "correlationVector":"","action":"Microsoft.Sync.State.Sign.In.UserActionableError.2Min", "result":"Error:7"}
+{"logTime": "1125/224037", "correlationVector":"7HYMEOB+AN8jumIxrbcRQm","action":"Normal GetUpdate request", "result":"", "context":cV=7HYMEOB+AN8jumIxrbcRQm
+Refresh requested types: Encryption Keys}
+{"logTime": "1125/224037", "correlationVector":"7HYMEOB+AN8jumIxrbcRQm.1","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"Prod_southindia_prod-s01-004-apac-southindia", "migrationStage":"NotStarted", "server":"akswtt10800000z"}}
+{"logTime": "1125/224037", "correlationVector":"7HYMEOB+AN8jumIxrbcRQm.2","action":"GetUpdates Response", "result":"Success", "context":Received 0 update(s). cV=7HYMEOB+AN8jumIxrbcRQm.0;server=akswtt10800000z;cloudType=Consumer;environment=Prod_southindia_prod-s01-004-apac-southindia;migrationStage=NotStarted}
+{"logTime": "1125/224449", "correlationVector":"PTTAuHAxBPHpcxDaPYX8+I","action":"Normal GetUpdate request", "result":"", "context":cV=PTTAuHAxBPHpcxDaPYX8+I
+Refresh requested types: Encryption Keys}
+{"logTime": "1125/224450", "correlationVector":"PTTAuHAxBPHpcxDaPYX8+I.1","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"Prod_southindia_prod-s01-004-apac-southindia", "migrationStage":"NotStarted", "server":"akswtt108000019"}}
+{"logTime": "1125/224450", "correlationVector":"PTTAuHAxBPHpcxDaPYX8+I.2","action":"GetUpdates Response", "result":"Success", "context":Received 0 update(s). cV=PTTAuHAxBPHpcxDaPYX8+I.0;server=akswtt108000019;cloudType=Consumer;environment=Prod_southindia_prod-s01-004-apac-southindia;migrationStage=NotStarted}
+{"logTime": "1125/224636", "correlationVector":"IXFcO0k5j+39LQ+MRvSq+F","action":"Normal GetUpdate request", "result":"", "context":cV=IXFcO0k5j+39LQ+MRvSq+F
+Refresh requested types: Encryption Keys}
+{"logTime": "1125/224636", "correlationVector":"IXFcO0k5j+39LQ+MRvSq+F.1","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"Prod_southindia_prod-s01-004-apac-southindia", "migrationStage":"NotStarted", "server":"akswtt10800002o"}}
+{"logTime": "1125/224636", "correlationVector":"IXFcO0k5j+39LQ+MRvSq+F.2","action":"GetUpdates Response", "result":"Success", "context":Received 0 update(s). cV=IXFcO0k5j+39LQ+MRvSq+F.0;server=akswtt10800002o;cloudType=Consumer;environment=Prod_southindia_prod-s01-004-apac-southindia;migrationStage=NotStarted}
+{"logTime": "1125/224931", "correlationVector":"5r1kGbrYKlzy36ToOW+CFG","action":"Normal GetUpdate request", "result":"", "context":cV=5r1kGbrYKlzy36ToOW+CFG
+Refresh requested types: Encryption Keys}
+{"logTime": "1125/224931", "correlationVector":"5r1kGbrYKlzy36ToOW+CFG.1","action":"SyncServerConnectionManagerRequest", "result":"SYNC_SERVER_OK", "context":{"environment":"Prod_southindia_prod-s01-004-apac-southindia", "migrationStage":"NotStarted", "server":"akswtt10800002f"}}
+{"logTime": "1125/224931", "correlationVector":"5r1kGbrYKlzy36ToOW+CFG.2","action":"GetUpdates Response", "result":"Success", "context":Received 0 update(s). cV=5r1kGbrYKlzy36ToOW+CFG.0;server=akswtt10800002f;cloudType=Consumer;environment=Prod_southindia_prod-s01-004-apac-southindia;migrationStage=NotStarted}
+{"logTime": "1125/224951", "correlationVector":"","action":"Microsoft.Sync.State.UserActionableError.30Sec", "result":"Error:7"}
+{"logTime": "1125/224951", "correlationVector":"","action":"Microsoft.Sync.State.Existing.UserActionableError.30Sec", "result":"Error:7"}
+{"logTime": "1125/225021", "correlationVector":"","action":"Microsoft.Sync.State.UserActionableError.1Min", "result":"Error:7"}
+{"logTime": "1125/225021", "correlationVector":"","action":"Microsoft.Sync.State.Existing.UserActionableError.1Min", "result":"Error:7"}
+{"logTime": "1125/225121", "correlationVector":"","action":"Microsoft.Sync.State.UserActionableError.2Min", "result":"Error:7"}
+{"logTime": "1125/225121", "correlationVector":"","action":"Microsoft.Sync.State.Existing.UserActionableError.2Min", "result":"Error:7"}

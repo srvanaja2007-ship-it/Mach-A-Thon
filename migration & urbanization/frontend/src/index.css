@@ -48,6 +48,10 @@ input[type="range"].aero-slider::-webkit-slider-thumb:hover {
   font-family: "Inter", sans-serif !important;
 }
 
+.dark-osm-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(96%) saturate(80%);
+}
+
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
   background: rgba(8, 13, 26, 0.96) !important;

@@ -45,10 +45,11 @@ export default function MissionMap({
     });
 
     const darkTiles = L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
-        maxZoom: 16,
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 18,
+        className: "dark-osm-tiles",
       }
     ).addTo(map);
 
@@ -56,7 +57,7 @@ export default function MissionMap({
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
         attribution: "&copy; Esri World Imagery",
-        maxZoom: 19,
+        maxZoom: 18,
       }
     );
 

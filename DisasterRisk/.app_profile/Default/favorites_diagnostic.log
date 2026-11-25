@@ -9,3 +9,111 @@
 2026-11-25 20:53:32.474: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
 2026-11-25 20:53:32.522: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
 2026-11-25 20:53:36.933: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:37:35.659: [INFO] CurrentProfilePath: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:37:35.659: [INFO] Profiles total count: 1
+2026-11-25 22:37:35.660: [INFO] Profile: name=Profile 1 path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:37:35.634Z
+2026-11-25 22:37:35.660: [INFO] LastUsedProfileDir: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:37:35.660: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:37:35.634Z
+2026-11-25 22:37:35.660: [INFO] OnDoneLoading sync enabled: 0
+2026-11-25 22:37:35.660: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-25 22:37:35.660: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-25 22:37:35.660: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:37:35.662: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-25 22:37:38.247: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-25 22:37:38.250: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:38.253: [INFO] Primary account changed.
+2026-11-25 22:37:38.253: [INFO] OnPrimaryAccountChanged PrimaryAccountChangeEvent::Type::kSet
+2026-11-25 22:37:39.444: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.155: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.157: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.159: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.178: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.179: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.181: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:37:40.183: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:37:40.186: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:37:41.487: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:37:41.498: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:37:41.512: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:37:41.514: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:37:41.744: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:37:41.877: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:40:03.515: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:40:36.912: [INFO] CurrentProfilePath: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:40:36.912: [INFO] Profiles total count: 1
+2026-11-25 22:40:36.912: [INFO] Profile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:40:36.879Z
+2026-11-25 22:40:36.912: [INFO] LastUsedProfileDir: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:40:36.912: [INFO] MostRecentlyActiveProfile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:40:36.879Z
+2026-11-25 22:40:36.912: [INFO] OnDoneLoading sync enabled: 0
+2026-11-25 22:40:36.912: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-25 22:40:36.912: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-25 22:40:36.912: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:40:36.920: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:40:36.950: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:40:36.952: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:40:36.953: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:40:36.955: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:40:36.966: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:40:36.975: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:40:37.041: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:40:37.335: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:40:37.364: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:40:56.026: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:44:48.317: [INFO] CurrentProfilePath: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:44:48.317: [INFO] Profiles total count: 1
+2026-11-25 22:44:48.317: [INFO] Profile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:44:48.272Z
+2026-11-25 22:44:48.317: [INFO] LastUsedProfileDir: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:44:48.317: [INFO] MostRecentlyActiveProfile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:44:48.272Z
+2026-11-25 22:44:48.317: [INFO] OnDoneLoading sync enabled: 0
+2026-11-25 22:44:48.317: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-25 22:44:48.317: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-25 22:44:48.317: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:44:48.324: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:44:48.354: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:44:48.355: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:44:48.357: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:44:48.359: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:44:48.392: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:44:48.401: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:44:48.404: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:44:50.149: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:44:50.160: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:44:52.584: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:46:26.422: [INFO] CurrentProfilePath: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:46:26.422: [INFO] Profiles total count: 1
+2026-11-25 22:46:26.422: [INFO] Profile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:46:26.374Z
+2026-11-25 22:46:26.422: [INFO] LastUsedProfileDir: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:46:26.422: [INFO] MostRecentlyActiveProfile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:46:26.374Z
+2026-11-25 22:46:26.422: [INFO] OnDoneLoading sync enabled: 0
+2026-11-25 22:46:26.422: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-25 22:46:26.422: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-25 22:46:26.422: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:46:36.342: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:46:36.343: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:46:36.346: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:46:36.350: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:46:36.354: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:46:36.357: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:46:36.361: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:46:36.562: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:46:36.580: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:46:38.721: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:49:21.859: [INFO] CurrentProfilePath: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:49:21.859: [INFO] Profiles total count: 1
+2026-11-25 22:49:21.859: [INFO] Profile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:49:21.818Z
+2026-11-25 22:49:21.859: [INFO] LastUsedProfileDir: C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 22:49:21.859: [INFO] MostRecentlyActiveProfile: name=Personal path=C:\Users\USER\OneDrive\Desktop\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T22:49:21.818Z
+2026-11-25 22:49:21.859: [INFO] OnDoneLoading sync enabled: 0
+2026-11-25 22:49:21.859: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-25 22:49:21.859: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-25 22:49:21.859: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 22:49:31.779: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:49:31.780: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-25 22:49:31.783: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:49:31.786: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:49:31.789: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 5
+2026-11-25 22:49:31.792: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:49:31.795: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:49:31.961: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:49:31.981: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 6
+2026-11-25 22:52:23.190: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
