@@ -1,0 +1,11 @@
+2026-11-25 20:53:32.474: [INFO] CurrentProfilePath: C:\Users\Sam\OneDrive\Desktop\Mach-A-Thon\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 20:53:32.474: [INFO] Profiles total count: 1
+2026-11-25 20:53:32.474: [INFO] Profile: name=Profile 1 path=C:\Users\Sam\OneDrive\Desktop\Mach-A-Thon\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T20:53:32.438Z
+2026-11-25 20:53:32.474: [INFO] LastUsedProfileDir: C:\Users\Sam\OneDrive\Desktop\Mach-A-Thon\Mach-A-Thon\DisasterRisk\.app_profile\Default
+2026-11-25 20:53:32.474: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Sam\OneDrive\Desktop\Mach-A-Thon\Mach-A-Thon\DisasterRisk\.app_profile\Default lastActive=2026-11-25T20:53:32.438Z
+2026-11-25 20:53:32.474: [INFO] OnDoneLoading sync enabled: 0
+2026-11-25 20:53:32.474: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-25 20:53:32.474: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-25 20:53:32.474: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-25 20:53:32.522: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-25 20:53:36.933: [INFO] BookmarksSnapshot Shutdown total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
