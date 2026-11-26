@@ -100,33 +100,35 @@ export default function MissionMap({
     layers.corridors.clearLayers();
 
     if (showZones) {
-      const half = 0.00113;
+      const half = 0.00114;
       for (const cell of data.cells) {
         const color = ZONE_COLOR[cell.zone] ?? "#64748B";
+        // Keep Zone 3 (undeveloped green buffer) subtle so urban clusters & roads stand out
+        const fillOpacity =
+          cell.zone === 2 ? 0.52 : cell.zone === 0 ? 0.50 : cell.zone === 1 ? 0.28 : 0.06;
         L.rectangle(
           [
             [cell.lat - half, cell.lon - half],
             [cell.lat + half, cell.lon + half],
           ],
           {
-            color,
-            weight: 0.4,
-            opacity: 0.5,
+            stroke: false,
             fillColor: color,
-            fillOpacity: cell.zone === 2 ? 0.45 : 0.22,
+            fillOpacity,
           }
         ).addTo(layers.zones);
       }
     }
 
     if (showForecast) {
-      for (const cell of data.cells) {
-        if (cell.sprawl < 0.32) continue;
+      for (let i = 0; i < data.cells.length; i += 2) {
+        const cell = data.cells[i];
+        if (cell.sprawl < 0.42) continue;
         L.circle([cell.lat, cell.lon], {
-          radius: 170 + cell.sprawl * 160,
+          radius: 150 + cell.sprawl * 130,
           stroke: false,
-          fillColor: cell.sprawl > 0.6 ? "#F59E0B" : "#FBBF24",
-          fillOpacity: Math.min(0.42, cell.sprawl * 0.48),
+          fillColor: cell.sprawl > 0.62 ? "#F59E0B" : "#FBBF24",
+          fillOpacity: Math.min(0.32, cell.sprawl * 0.36),
         }).addTo(layers.forecast);
       }
     }

@@ -296,20 +296,6 @@ export default function App() {
                 ))}
               </div>
             </div>
-
-            <div className="rounded-xl border border-cyan-500/20 bg-[#050811]/80 px-4 py-2.5 text-right font-mono text-[11px] text-slate-400 space-y-0.5">
-              <div className="text-emerald-400 font-bold flex items-center justify-end gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                EO LINK NOMINAL
-              </div>
-              <div>
-                TARGET:{" "}
-                <span className="text-slate-100">
-                  {activeCoords ? `${activeCoords.lat.toFixed(4)}°N, ${activeCoords.lon.toFixed(4)}°E` : "—"}
-                </span>
-              </div>
-              <div className="text-cyan-400">BOEING EXECUTIVE PITCH</div>
-            </div>
           </div>
         </header>
 

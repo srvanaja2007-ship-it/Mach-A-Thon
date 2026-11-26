@@ -6,6 +6,7 @@ Imports existing data_pipeline, ml_engine, and planner_engine without modifying 
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 from pathlib import Path
@@ -56,10 +57,10 @@ def _serialize_plan(plan: dict[str, Any], roi: dict[str, Any]) -> dict[str, Any]
     vv_db = plan["vv_db"]
     road_dist_m = plan["road_dist_m"]
 
-    # Sample every 2nd cell for crisp 24x24 (576 cells) map overlay + scatter proof
+    # Full 48x48 (2,304 cells) seamless grid for organic map overlay
     cells = []
-    for r in range(0, n, 2):
-        for c in range(0, n, 2):
+    for r in range(n):
+        for c in range(n):
             cells.append({
                 "lat": round(float(grid_lat[r, c]), 5),
                 "lon": round(float(grid_lon[r, c]), 5),
@@ -164,7 +165,7 @@ async def analyze(request: Request) -> JSONResponse:
     lon = float(request.query_params.get("lon", 77.70))
     budget_cr = float(request.query_params.get("budget_cr", 50.0))
 
-    base_plan = _get_base_plan(lat, lon)
+    base_plan = await asyncio.to_thread(_get_base_plan, lat, lon)
     roi = simulate_roi(base_plan, base_plan["corridors"], early_budget_cr=budget_cr)
     return JSONResponse(_serialize_plan(base_plan, roi))
 
@@ -174,7 +175,7 @@ async def update_roi(request: Request) -> JSONResponse:
     lon = float(request.query_params.get("lon", 77.70))
     budget_cr = float(request.query_params.get("budget_cr", 50.0))
 
-    base_plan = _get_base_plan(lat, lon)
+    base_plan = await asyncio.to_thread(_get_base_plan, lat, lon)
     roi = simulate_roi(base_plan, base_plan["corridors"], early_budget_cr=budget_cr)
     return JSONResponse({"roi": roi})
 

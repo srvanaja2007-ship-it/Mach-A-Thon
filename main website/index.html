@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orbit-to-Economy | Aeromania '26 3D Mission Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+      body {
+        background: radial-gradient(circle at 50% 0%, #1a150b 0%, #090806 48%, #040405 100%);
+        color: #f3f4f6;
+        font-family: "Inter", system-ui, sans-serif;
+        overflow-x: hidden;
+      }
+      .font-display { font-family: "Space Grotesk", sans-serif; }
+      .font-mono { font-family: "JetBrains Mono", monospace; }
+
+      #orbital-canvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* Obsidian & Gold 3D Cards */
+      .aero-card-3d {
+        background: linear-gradient(155deg, rgba(24, 20, 14, 0.88) 0%, rgba(13, 11, 8, 0.93) 60%, rgba(7, 6, 5, 0.96) 100%);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(212, 175, 55, 0.24);
+        box-shadow:
+          0 22px 55px rgba(0, 0, 0, 0.72),
+          inset 0 1px 0 rgba(251, 191, 36, 0.12);
+        transform-style: preserve-3d;
+        transition: transform 0.18s ease-out, border-color 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      .aero-card-3d::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(251, 191, 36, 0.12), transparent 45%);
+        pointer-events: none;
+      }
+      .aero-card-3d:hover {
+        border-color: rgba(251, 191, 36, 0.60);
+        box-shadow:
+          0 30px 70px rgba(0, 0, 0, 0.85),
+          0 0 32px rgba(212, 175, 55, 0.16),
+          inset 0 1px 0 rgba(253, 224, 71, 0.22);
+      }
+      .gold-header {
+        background: linear-gradient(145deg, rgba(24, 20, 13, 0.90) 0%, rgba(10, 9, 7, 0.95) 100%);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(212, 175, 55, 0.28);
+        border-top: 2px solid #eab308;
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.75),
+          0 0 40px rgba(212, 175, 55, 0.08),
+          inset 0 1px 0 rgba(253, 224, 71, 0.14);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen antialiased selection:bg-amber-500/30 selection:text-amber-200">
+    <canvas id="orbital-canvas"></canvas>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Top Gold & Black Mission Control Header -->
+      <header class="gold-header rounded-2xl p-6 sm:p-8">
+        <div class="flex flex-wrap items-center justify-between gap-5">
+          <div>
+            <div class="font-mono text-[11px] uppercase tracking-[0.26em] text-amber-400 mb-2 flex items-center gap-2">
+              <span class="inline-block h-1.5 w-6 bg-amber-400"></span>
+              AEROMANIA '26 MACH-A-THON // BOEING TRACK A // 3D COMMAND HUB
+            </div>
+            <h1 class="font-display text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-500 bg-clip-text text-transparent">
+              Orbit-to-Economy: Integrated Aerospace AI Suite
+            </h1>
+            <p class="text-sm text-stone-300 mt-2 max-w-3xl leading-relaxed">
+              Four coupled space-to-ground intelligence engines transforming raw orbital telemetry, SAR/optical earth observation, and onboard LEO processing into actionable economic &amp; urban decisions.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-amber-500/30 bg-[#070605]/90 px-4 py-3 text-right font-mono text-xs space-y-1 shadow-inner">
+            <div class="flex items-center justify-end gap-2 text-amber-400 font-bold">
+              <span class="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
+              3D TELEMETRY ONLINE
+            </div>
+            <div class="text-stone-300">4 ACTIVE MODULES · TRACK A</div>
+            <div class="text-amber-300">PORTAL // 127.0.0.1:9000</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 3D Module Cards Grid -->
+      <section class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6" id="cards-grid"></section>
+
+      <!-- Footer Architecture Strip -->
+      <footer class="mt-8 rounded-2xl border border-amber-500/25 bg-[#0c0a07]/90 backdrop-blur-md p-5 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-300">
+        <div>
+          <span class="font-mono text-amber-400 font-bold">ORBIT-TO-ECONOMY PIPELINE:</span>
+          LEO Onboard Compression → Multi-Sensor Earth Observation → Economic Nowcasting → Disaster &amp; Urban Action
+        </div>
+        <div class="font-mono text-[11px] text-stone-400">
+          Aeromania '26 · Mach-A-Thon · Gold &amp; Obsidian 3D UI
+        </div>
+      </footer>
+    </div>
+
+    <!-- 3D Three.js Gold & Obsidian Orbital Globe -->
+    <script>
+      (function init3DOrbitalScene() {
+        if (typeof THREE === "undefined") return;
+        const canvas = document.getElementById("orbital-canvas");
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0.8, 12.5);
+
+        // Wireframe Gold Earth Sphere
+        const globeGroup = new THREE.Group();
+        globeGroup.position.set(3.2, -0.4, -2.5);
+        scene.add(globeGroup);
+
+        const sphereGeo = new THREE.SphereGeometry(3.5, 32, 24);
+        const wireMat = new THREE.MeshBasicMaterial({
+          color: 0xd4af37,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.22,
+        });
+        globeGroup.add(new THREE.Mesh(sphereGeo, wireMat));
+
+        // Obsidian inner core
+        const coreGeo = new THREE.SphereGeometry(3.42, 32, 24);
+        const coreMat = new THREE.MeshBasicMaterial({
+          color: 0x070604,
+          transparent: true,
+          opacity: 0.78,
+        });
+        globeGroup.add(new THREE.Mesh(coreGeo, coreMat));
+
+        // Orbital Rings + Gold Satellites
+        function makeOrbitRing(radius, tiltX, tiltZ, colorHex, opacity) {
+          const pts = [];
+          for (let i = 0; i <= 128; i++) {
+            const a = (i / 128) * Math.PI * 2;
+            pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+          }
+          const geo = new THREE.BufferGeometry().setFromPoints(pts);
+          const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity });
+          const ring = new THREE.LineLoop(geo, mat);
+          ring.rotation.x = tiltX;
+          ring.rotation.z = tiltZ;
+
+          const sat = new THREE.Mesh(
+            new THREE.OctahedronGeometry(0.12, 0),
+            new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+          );
+          ring.add(sat);
+          globeGroup.add(ring);
+          return { ring, sat, radius };
+        }
+
+        const orbits = [
+          makeOrbitRing(4.35, 0.42, 0.25, 0xd4af37, 0.40),
+          makeOrbitRing(4.85, -0.55, 0.48, 0xfbbf24, 0.30),
+          makeOrbitRing(5.35, 0.18, -0.62, 0xb45309, 0.28),
+        ];
+
+        // Gold-Dusted Starfield
+        const starCount = 450;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i++) {
+          starPos[i] = (Math.random() - 0.5) * 38;
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+        const stars = new THREE.Points(
+          starGeo,
+          new THREE.PointsMaterial({ color: 0xfde68a, size: 0.045, transparent: true, opacity: 0.48 })
+        );
+        scene.add(stars);
+
+        let mouseX = 0;
+        let mouseY = 0;
+        window.addEventListener("mousemove", (e) => {
+          mouseX = (e.clientX / window.innerWidth - 0.5) * 0.6;
+          mouseY = (e.clientY / window.innerHeight - 0.5) * 0.4;
+        });
+
+        window.addEventListener("resize", () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        let t = 0;
+        function animate() {
+          requestAnimationFrame(animate);
+          t += 0.005;
+          globeGroup.rotation.y += 0.0022;
+          stars.rotation.y -= 0.0003;
+
+          orbits.forEach((o, idx) => {
+            const angle = t * (1.2 + idx * 0.45) + idx * 2.1;
+            o.sat.position.set(Math.cos(angle) * o.radius, 0, Math.sin(angle) * o.radius);
+          });
+
+          camera.position.x += (mouseX - camera.position.x) * 0.04;
+          camera.position.y += (0.8 - mouseY - camera.position.y) * 0.04;
+          camera.lookAt(0, 0, 0);
+          renderer.render(scene, camera);
+        }
+        animate();
+      })();
+    </script>
+
+    <!-- Portal Logic + 3D Card Tilt -->
+    <script>
+      const MODULE_META = [
+        {
+          id: "urbanization",
+          badge: "URBANIZATION // SENTINEL-2 + SAR",
+          title: "UrbanPulse AI",
+          subtitle: "Migration & Urbanization Intelligence",
+          folder: "migration & urbanization",
+          accent: "border-t-amber-400",
+          pillColor: "text-amber-200 border-amber-400/40 bg-amber-500/10",
+          description:
+            "Fuses Sentinel-2 optical ΔNDBI, Sentinel-1 SAR radar, night-light proxies, and OSM road graphs on a 250m grid to flag underserved Night-Light Gap settlements, forecast 2027–28 sprawl, and auto-route bus & power corridors with ₹ Crore ROI.",
+          highlights: ["4-Zone AI Classifier (99% CV)", "2027–28 Sprawl Forecaster", "Dijkstra Corridor Auto-Router"],
+        },
+        {
+          id: "disaster",
+          badge: "DISASTER RISK // SAR + VIIRS",
+          title: "ClaimPulse",
+          subtitle: "Satellite Disaster Risk & Economic Engine",
+          folder: "DisasterRisk",
+          accent: "border-t-yellow-500",
+          pillColor: "text-amber-200 border-amber-400/40 bg-amber-500/10",
+          description:
+            "Converts satellite flood, wildfire, and cyclone footprints into instant building exposure, parametric insurance claim payouts, and municipal emergency response blueprints with uncertainty bounds and PDF/GeoJSON exports.",
+          highlights: ["Multi-Stakeholder Payout Engine", "Parametric Trigger Verification", "PDF / GeoJSON / CSV Export"],
+        },
+        {
+          id: "eco_act",
+          badge: "ECONOMIC NOWCAST // VIIRS NIGHT-LIGHTS",
+          title: "Eco_Act",
+          subtitle: "Tumkur Spatio-Temporal Economic AI",
+          folder: "Eco_Act",
+          accent: "border-t-amber-300",
+          pillColor: "text-amber-200 border-amber-400/40 bg-amber-500/10",
+          description:
+            "Analyzes multi-year NASA/NOAA VIIRS nighttime radiant flux across Tumkur and the NH-48 industrial corridor to nowcast District GDP (GDDP in ₹ Crores) and synthesize future 2D satellite growth maps.",
+          highlights: ["GDDP Nowcasting (₹ Cr)", "2D Future Night-Light Synthesis", "Investment Opportunity Zones"],
+        },
+        {
+          id: "leo_sim",
+          badge: "ORBITAL EDGE // 500 KM LEO",
+          title: "LEO_Sim",
+          subtitle: "Onboard Satellite AI & Downlink Simulator",
+          folder: "LEO_Sim",
+          accent: "border-t-yellow-400",
+          pillColor: "text-amber-200 border-amber-400/40 bg-amber-500/10",
+          description:
+            "Simulates a 500 km Low-Earth-Orbit satellite executing Eco_Act AI inference onboard before downlink—compressing multi-megabyte raw imagery into compact JSON insights over a 2 Mbps ground-station link.",
+          highlights: ["Keplerian 92-min Orbit Sim", "Onboard Edge AI Inference", "Downlink Bandwidth Compression"],
+        },
+      ];
+
+      let liveStatus = {};
+
+      async function fetchStatus() {
+        try {
+          const res = await fetch("/api/status");
+          const json = await res.json();
+          liveStatus = json.modules || {};
+        } catch (e) {
+          liveStatus = {};
+        }
+        renderCards();
+      }
+
+      async function openModule(id, btn) {
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = "Launching…";
+        try {
+          const res = await fetch(`/api/launch/${id}`, { method: "POST" });
+          const json = await res.json();
+          if (json.url) {
+            window.open(json.url, "_blank", "noopener");
+          }
+          await fetchStatus();
+        } catch (e) {
+          alert("Could not launch module: " + e.message);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
+
+      function attach3DTilt() {
+        document.querySelectorAll(".aero-card-3d").forEach((card) => {
+          card.addEventListener("mousemove", (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const rx = ((y / rect.height) - 0.5) * -7;
+            const ry = ((x / rect.width) - 0.5) * 7;
+            card.style.setProperty("--mx", `${x}px`);
+            card.style.setProperty("--my", `${y}px`);
+            card.style.transform = `perspective(1100px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
+          });
+          card.addEventListener("mouseleave", () => {
+            card.style.transform = "perspective(1100px) rotateX(0deg) rotateY(0deg) translateY(0px)";
+          });
+        });
+      }
+
+      function renderCards() {
+        const grid = document.getElementById("cards-grid");
+        grid.innerHTML = MODULE_META.map((m) => {
+          const st = liveStatus[m.id] || {};
+          const isOnline = !!st.running;
+          const directUrl = st.url || "#";
+
+          return `
+            <article class="aero-card-3d rounded-2xl border-t-2 ${m.accent} p-6 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <span class="rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider ${m.pillColor}">
+                    ${m.badge}
+                  </span>
+                  <span class="font-mono text-[10px] flex items-center gap-1.5 ${isOnline ? "text-amber-300" : "text-stone-400"}">
+                    <span class="h-1.5 w-1.5 rounded-full ${isOnline ? "bg-amber-400 animate-pulse" : "bg-stone-500"}"></span>
+                    ${isOnline ? "ONLINE" : "STANDBY"}
+                  </span>
+                </div>
+
+                <h2 class="font-display text-2xl font-bold text-amber-50 tracking-tight">${m.title}</h2>
+                <div class="text-xs font-medium text-amber-300 mb-3">${m.subtitle}</div>
+                <p class="text-xs text-stone-300 leading-relaxed mb-4">${m.description}</p>
+
+                <div class="space-y-1.5 mb-5">
+                  ${m.highlights
+                    .map(
+                      (h) => `
+                    <div class="flex items-center gap-2 font-mono text-[11px] text-stone-200">
+                      <span class="text-amber-400">▸</span> ${h}
+                    </div>`
+                    )
+                    .join("")}
+                </div>
+              </div>
+
+              <div class="pt-3.5 border-t border-amber-500/20 flex items-center justify-between gap-2">
+                <span class="font-mono text-[10px] text-stone-400 truncate">${m.folder}/</span>
+                <div class="flex items-center gap-2">
+                  <a href="${directUrl}" target="_blank" rel="noopener"
+                     class="rounded-lg border border-amber-500/35 bg-[#12100b] px-3 py-1.5 font-mono text-[11px] text-amber-200 hover:border-amber-300 hover:text-white transition-colors">
+                    Direct URL
+                  </a>
+                  <button onclick="openModule('${m.id}', this)"
+                          class="rounded-lg border border-amber-300/60 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 px-4 py-1.5 font-display text-xs font-bold text-black shadow-[0_6px_22px_rgba(245,158,11,0.28)] hover:brightness-110 transition-all">
+                    Open Website →
+                  </button>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("");
+        attach3DTilt();
+      }
+
+      fetchStatus();
+      setInterval(fetchStatus, 8000);
+    </script>
+  </body>
+</html>
