@@ -65,6 +65,24 @@ PRESET_HUBS: dict[str, dict] = {
     },
 }
 
+BORDER_SECTORS: dict[str, dict] = {
+    "Sector 1: Dawki – Meghalaya International Border": {
+        "lat": 25.19, "lon": 92.02,
+        "description": "Cross-border encroachment & unlit night-time transit monitoring",
+        "authority": "BSF / Eastern Command",
+    },
+    "Sector 2: Moreh – Manipur Border Corridor": {
+        "lat": 24.25, "lon": 94.30,
+        "description": "Rapid perimeter construction & unmapped trail detection",
+        "authority": "Assam Rifles / Ministry of Defence",
+    },
+    "Sector 3: Yelahanka Air Force Station Buffer – Bengaluru": {
+        "lat": 13.13, "lon": 77.60,
+        "description": "Defense airfield perimeter encroachment & no-build buffer zone monitoring",
+        "authority": "IAF / Defense Estates",
+    },
+}
+
 # Grid parameters
 GRID_SIZE_M = 250
 BOX_KM      = 12.0
@@ -354,6 +372,11 @@ def _fetch_osm(lat: float, lon: float) -> dict[str, np.ndarray]:
         import osmnx as ox
         from scipy.spatial import cKDTree
 
+        ox.settings.requests_timeout = 15
+        if hasattr(ox.settings, "http_timeout"):
+            ox.settings.http_timeout = 15
+        ox.settings.overpass_rate_limit = False
+        ox.settings.use_cache = False
         half = BOX_KM / 2
         log.info("Fetching OSM road network for (%.4f, %.4f) ± %.1f km …", lat, lon, half)
 

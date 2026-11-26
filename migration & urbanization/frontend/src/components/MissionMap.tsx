@@ -4,6 +4,7 @@ import type { AnalysisResponse } from "../types";
 
 interface MissionMapProps {
   data: AnalysisResponse;
+  mode: "urban_pulse" | "border_security";
   showZones: boolean;
   showNlg: boolean;
   showForecast: boolean;
@@ -19,6 +20,7 @@ const ZONE_COLOR: Record<number, string> = {
 
 export default function MissionMap({
   data,
+  mode,
   showZones,
   showNlg,
   showForecast,
@@ -149,17 +151,23 @@ export default function MissionMap({
             fillOpacity: 0.55,
           }
         );
+        const alertTitle =
+          mode === "border_security"
+            ? "⚠ COVERT PERIMETER ALERT"
+            : "⚠ NIGHT-LIGHT GAP ALERT";
+        const riskLabel =
+          mode === "border_security" ? "2027–28 Encroachment Risk:" : "2027–28 Sprawl Risk:";
         rect.bindPopup(`
-          <div style="font-family:Inter,sans-serif;min-width:210px;font-size:12px;">
+          <div style="font-family:Inter,sans-serif;min-width:215px;font-size:12px;">
             <div style="color:#F87171;font-weight:700;margin-bottom:6px;letter-spacing:0.5px;">
-              ⚠ NIGHT-LIGHT GAP ALERT
+              ${alertTitle}
             </div>
             <div style="color:#94A3B8;line-height:1.6;">
               <div><b style="color:#E2E8F0">Coords:</b> ${cell.lat.toFixed(4)}°N, ${cell.lon.toFixed(4)}°E</div>
               <div><b style="color:#E2E8F0">ΔNDBI Growth:</b> <span style="color:#22D3EE">${cell.delta_ndbi >= 0 ? "+" : ""}${cell.delta_ndbi.toFixed(3)}</span></div>
               <div><b style="color:#E2E8F0">Night-Light Proxy:</b> <span style="color:#FBBF24">${cell.viirs.toFixed(1)}</span></div>
               <div><b style="color:#E2E8F0">Road Distance:</b> ${Math.round(cell.road_m)} m</div>
-              <div><b style="color:#E2E8F0">2027–28 Sprawl Risk:</b> <span style="color:#F87171">${(cell.sprawl * 100).toFixed(0)}%</span></div>
+              <div><b style="color:#E2E8F0">${riskLabel}</b> <span style="color:#F87171">${(cell.sprawl * 100).toFixed(0)}%</span></div>
             </div>
           </div>
         `);
@@ -187,10 +195,14 @@ export default function MissionMap({
 
         const deferredCost = (c.cost_cr * 3.4).toFixed(2);
         const netSavings = (c.cost_cr * 2.4).toFixed(2);
+        const corrTitle =
+          mode === "border_security"
+            ? `🛡️ PATROL & SENSOR CORRIDOR #${c.rank}`
+            : `🛰️ AI CORRIDOR #${c.rank}`;
         line.bindPopup(`
           <div style="font-family:Inter,sans-serif;min-width:225px;font-size:12px;">
             <div style="color:#22D3EE;font-weight:700;margin-bottom:6px;letter-spacing:0.5px;">
-              🛰️ AI CORRIDOR #${c.rank}
+              ${corrTitle}
             </div>
             <div style="color:#94A3B8;line-height:1.6;">
               <div><b style="color:#E2E8F0">Corridor Length:</b> ${c.corridor_km.toFixed(2)} km</div>
@@ -220,7 +232,7 @@ export default function MissionMap({
         }).addTo(layers.corridors);
       }
     }
-  }, [data, showZones, showNlg, showForecast, showCorridors]);
+  }, [data, mode, showZones, showNlg, showForecast, showCorridors]);
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-cyan-500/25 shadow-[0_14px_45px_rgba(0,0,0,0.55)]">
@@ -247,16 +259,19 @@ export default function MissionMap({
             <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Legal Suburb
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-red-500 shadow-[0_0_6px_#ef4444]" /> Night-Light Gap
+            <span className="h-2.5 w-2.5 rounded-sm bg-red-500 shadow-[0_0_6px_#ef4444]" />{" "}
+            {mode === "border_security" ? "Covert Alert" : "Night-Light Gap"}
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-lime-500" /> Green / Water
+            <span className="h-2.5 w-2.5 rounded-sm bg-lime-500" />{" "}
+            {mode === "border_security" ? "Buffer / Forest" : "Green / Water"}
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" /> 2027–28 Risk
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-0.5 w-3.5 bg-cyan-300 shadow-[0_0_6px_#22d3ee]" /> AI Corridor
+            <span className="h-0.5 w-3.5 bg-cyan-300 shadow-[0_0_6px_#22d3ee]" />{" "}
+            {mode === "border_security" ? "Patrol / Fence Link" : "AI Corridor"}
           </div>
         </div>
       </div>
