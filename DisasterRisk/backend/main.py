@@ -32,7 +32,9 @@ from backend.modules.implementations import (
     DemoSatelliteConnector,
     MultiStakeholderDecisionModule,
     StandardExposureModule,
+    TrackBEdgeDataConnector,
     TransparentEconomicModel,
+    build_raw_data_from_track_b,
 )
 from backend.scenarios.data_builder import PRESET_EVENTS
 from backend.services.analyst import answer_question
@@ -40,6 +42,7 @@ from backend.services.analyst import answer_question
 
 registry = PlatformRegistry()
 registry.register_connector(DemoSatelliteConnector())
+registry.register_connector(TrackBEdgeDataConnector())
 registry.register_hazard(BaseHazardModule("flood", "sentinel1-viirs-flood-v1"))
 registry.register_hazard(BaseHazardModule("wildfire", "firms-dnbr-wildfire-v1"))
 registry.register_hazard(BaseHazardModule("cyclone", "wind-surge-blackmarble-cyclone-v1"))
@@ -81,6 +84,17 @@ for mod in [
         layer_id="insurance_portfolio",
         action_label="Check Substation Status",
         kpis={"Substations": "6 monitored", "Latency": "Real-time stub"},
+    ),
+    ConnectedModule(
+        module_id="mod-trackb-orbit",
+        name="Track B Orbit-to-Edge Telemetry",
+        partner_team="Track B Aerospace Systems",
+        category="data_connector",
+        description="Ingests INT8 onboard satellite edge alerts + HAPS/Drone 0.04m LEO-GNSS verification.",
+        status="active",
+        layer_id="hazard_extent",
+        action_label="Ingest Track B Edge Alert",
+        kpis={"Compression": "99.99%", "GNSS Precision": "0.04 m"},
     ),
 ]:
     registry.register_ui_module(mod)
@@ -126,9 +140,11 @@ def _emit_webhook(event_type: str, payload: dict[str, Any]) -> None:
         del WEBHOOK_DELIVERIES[30:]
 
 
-def _run_pipeline(req: EventRequest) -> EventFullResponse:
+def _run_pipeline(
+    req: EventRequest, raw_override: dict[str, Any] | None = None
+) -> EventFullResponse:
     connector = registry.connectors["nasa-copernicus-demo-connector"]
-    raw = connector.fetch(req)
+    raw = raw_override if raw_override is not None else connector.fetch(req)
     hazard_mod = registry.hazard_modules[req.disaster_type]
     exposure_mod = registry.exposure_modules["osm-worldpop-fao-exposure-v1"]
     econ_mod: TransparentEconomicModel = registry.economic_models["claimpulse-transparent-loss-v1"]  # type: ignore[assignment]
@@ -436,6 +452,69 @@ async def get_webhooks(request: Request) -> JSONResponse:
     )
 
 
+def ingest_track_b_alert(
+    alert_payload: dict[str, Any],
+    aerial_verification: dict[str, Any] | None = None,
+    title: str | None = None,
+    country: str = "India",
+    state: str = "Odisha",
+    district: str = "Coastal Flood Corridor",
+) -> EventFullResponse:
+    """Ingest a verified Track B 19-field edge alert directly into Track A's economic/decision pipeline."""
+    bbox_vals = alert_payload["bounding_box"]
+    bbox = BoundingBox(
+        min_lon=float(bbox_vals[0]),
+        min_lat=float(bbox_vals[1]),
+        max_lon=float(bbox_vals[2]),
+        max_lat=float(bbox_vals[3]),
+    )
+    scene_date = str(alert_payload["scene_timestamp_utc"])[:10]
+    sat_id = str(alert_payload["satellite_id"])
+    peril = alert_payload["detected_peril"]
+    req = EventRequest(
+        preset_id=None,
+        disaster_type=peril,
+        title=title or f"Track B {sat_id} {peril.title()} Alert ? {district}",
+        country=country,
+        state=state,
+        district=district,
+        start_date=scene_date,
+        end_date=scene_date,
+        bbox=bbox,
+        intensity_multiplier=1.0,
+    )
+    raw = build_raw_data_from_track_b(req, alert_payload, aerial_verification=aerial_verification)
+    bundle = _run_pipeline(req, raw_override=raw)
+    _emit_webhook(
+        "event.processed",
+        {
+            "event_id": bundle.event.id,
+            "source": "track_b_edge_telemetry",
+            "satellite_id": sat_id,
+            "disaster_type": bundle.event.disaster_type,
+            "recommended_action_code": alert_payload.get("recommended_action_code"),
+            "total_expected_loss_inr": bundle.loss.total_expected_loss_inr,
+            "provisional_payout_inr": bundle.decisions.total_provisional_payout_inr,
+        },
+    )
+    return bundle
+
+
+async def ingest_track_b_endpoint(request: Request) -> JSONResponse:
+    body = await request.json()
+    alert_payload = body.get("edge_alert", body)
+    aerial_verification = body.get("aerial_verification")
+    bundle = ingest_track_b_alert(
+        alert_payload,
+        aerial_verification=aerial_verification,
+        title=body.get("title"),
+        country=body.get("country", "India"),
+        state=body.get("state", "Odisha"),
+        district=body.get("district", "Coastal Flood Corridor"),
+    )
+    return JSONResponse(bundle.model_dump())
+
+
 async def register_webhook(request: Request) -> JSONResponse:
     raw = await request.json()
     sub = WebhookSubscription(
@@ -470,6 +549,7 @@ def _build_api_routes(prefix: str = "") -> list[Route]:
         Route(f"{prefix}/modules/register", register_module, methods=["POST"]),
         Route(f"{prefix}/webhooks", get_webhooks, methods=["GET"]),
         Route(f"{prefix}/webhooks", register_webhook, methods=["POST"]),
+        Route(f"{prefix}/track-b/ingest", ingest_track_b_endpoint, methods=["POST"]),
     ]
 
 

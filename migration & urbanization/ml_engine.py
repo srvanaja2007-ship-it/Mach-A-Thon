@@ -87,19 +87,23 @@ def _generate_labels(df: pd.DataFrame) -> np.ndarray:
     )
     labels[is_tech] = 0
 
-    # Zone 2 — night-light gap / migrant settlement (percentile-ranked top ~12%
-    # of cells with high built-up growth + low nighttime illumination)
-    candidates = (~is_green) & (~is_tech)
+    # Zone 2 — night-light gap / migrant settlement
+    # Flag cells with genuine positive concrete growth (delta_ndbi > 0.01) AND
+    # relatively low nighttime illumination, weighted by remoteness from roads.
+    candidates = (~is_green) & (~is_tech) & (df["delta_ndbi"] > 0.01)
     if candidates.sum() > 0:
+        viirs_med = float(np.percentile(df["viirs_dnb"].values, 55))
+        dark_growing = candidates & (df["viirs_dnb"] <= viirs_med)
+        pool = dark_growing if dark_growing.sum() >= 25 else candidates
+
         ndbi_pct = pd.Series(df["delta_ndbi"].values).rank(pct=True).values
         dark_pct = 1.0 - pd.Series(df["viirs_dnb"].values).rank(pct=True).values
         road_pct = pd.Series(df["road_dist_m"].values).rank(pct=True).values
         nlg_score = 0.50 * ndbi_pct + 0.35 * dark_pct + 0.15 * road_pct
 
-        # Target ~12% of total grid cells (within 10-15% band) among candidates
-        target_frac = min(0.12 * n / float(candidates.sum()), 0.85)
-        cutoff = np.percentile(nlg_score[candidates], 100.0 * (1.0 - target_frac))
-        is_nlg = candidates & (nlg_score >= cutoff)
+        # Top 45% of dark growing cells (so count scales with each city's actual growth)
+        cutoff = np.percentile(nlg_score[pool], 55.0)
+        is_nlg = pool & (nlg_score >= cutoff)
         labels[is_nlg] = 2
     else:
         is_nlg = np.zeros(n, dtype=bool)

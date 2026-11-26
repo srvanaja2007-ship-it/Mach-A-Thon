@@ -110,13 +110,17 @@ def run_pipeline(dataset_dir=None, output_dir=None, future_horizon=3, region_nam
     visualizer.render_plot_metrics(hist_df, pred_df, zones, metrics_path, region_name=region_display, base_gddp=base_gddp)
 
     dashboard_path = os.path.join(output_dir, f"{region_slug}_ai_dashboard.html")
+    table_path = os.path.join(output_dir, f"{region_slug}_predictions_table.html")
+
     visualizer.generate_interactive_html_dashboard(
         hist_df, pred_df, images_hist, timestamps_hist, future_maps, future_years, zones, opt_landmark_path, dashboard_path,
-        region_name=region_display, base_gddp=base_gddp
+        region_name=region_display, base_gddp=base_gddp, table_filename=os.path.basename(table_path)
     )
 
-    table_path = os.path.join(output_dir, f"{region_slug}_predictions_table.html")
-    visualizer.generate_predictions_table_html(hist_df, pred_df, zones, table_path, region_name=region_display)
+    visualizer.generate_predictions_table_html(
+        hist_df, pred_df, zones, table_path,
+        region_name=region_display, dashboard_filename=os.path.basename(dashboard_path)
+    )
 
     hist_csv = os.path.join(output_dir, f"{region_slug}_historical_features.csv")
     pred_csv = os.path.join(output_dir, f"{region_slug}_future_predictions.csv")
