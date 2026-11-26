@@ -25,7 +25,7 @@ from starlette.staticfiles import StaticFiles
 PROJECT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_DIR))
 
-from data_pipeline import PRESET_HUBS, fetch_location_data
+from data_pipeline import BORDER_SECTORS, PRESET_HUBS, fetch_location_data
 from ml_engine import ZONE_COLORS, ZONE_LABELS, ZONE_SHORT, run_ml_pipeline
 from planner_engine import run_planner, simulate_roi
 
@@ -157,7 +157,7 @@ async def health(request: Request) -> JSONResponse:
 
 
 async def get_presets(request: Request) -> JSONResponse:
-    return JSONResponse({"presets": PRESET_HUBS})
+    return JSONResponse({"presets": PRESET_HUBS, "border_sectors": BORDER_SECTORS})
 
 
 async def analyze(request: Request) -> JSONResponse:

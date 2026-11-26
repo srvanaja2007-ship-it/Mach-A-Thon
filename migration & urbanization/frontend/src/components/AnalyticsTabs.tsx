@@ -95,7 +95,7 @@ export default function AnalyticsTabs({ data, hubName }: AnalyticsTabsProps) {
           }`}
         >
           <Orbit className="h-4 w-4" />
-          Orbit-to-Economy Architecture
+          Multi-Sector System Architecture
         </button>
       </div>
 
@@ -444,10 +444,10 @@ export default function AnalyticsTabs({ data, hubName }: AnalyticsTabsProps) {
           <div className="rounded-2xl border border-cyan-500/25 bg-[#080E1C]/90 p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
             <div className="flex items-center gap-2 font-display font-semibold text-cyan-300">
               <ShieldCheck className="h-4 w-4" />
-              Team Track A — Unified Orbit-to-Economy Ecosystem:
+              Multi-Sector Orbit-to-Economy Ecosystem:
             </div>
             <div className="font-mono text-[11px] text-slate-400">
-              🛰️ UrbanPulse AI (Migration) · 🌊 FloodSense (DisasterRisk) · 🌾 AgroSat · 🏗️ InfraScope · 📡 TrafficOrbit
+              🛰️ UrbanPulse AI (Migration &amp; Sprawl) · 🛡️ Border &amp; Perimeter Security · 🌊 ClaimPulse (DisasterRisk) · 🌾 Eco_Act · 📡 LEO_Sim
             </div>
           </div>
         </div>

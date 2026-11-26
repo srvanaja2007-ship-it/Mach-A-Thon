@@ -29,7 +29,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-from data_pipeline import PRESET_HUBS, fetch_location_data, _cache_key, CACHE_DIR
+from data_pipeline import BORDER_SECTORS, PRESET_HUBS, fetch_location_data, _cache_key, CACHE_DIR
 from ml_engine import run_ml_pipeline, ZONE_LABELS, ZONE_COLORS, ZONE_SHORT
 from planner_engine import run_planner, simulate_roi
 
@@ -146,6 +146,40 @@ CUSTOM_CSS = """
       font-size: 0.7rem;
       color: #94A3B8;
       line-height: 1.55;
+  }
+  .mode-switch-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-decoration: none !important;
+      letter-spacing: 0.3px;
+      transition: all 0.25s ease;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.14);
+      color: #FDE68A !important;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.18);
+  }
+  .mode-switch-link:hover {
+      transform: translateY(-2px);
+      background: rgba(245, 158, 11, 0.26);
+      box-shadow: 0 0 32px rgba(251, 191, 36, 0.48);
+      border-color: rgba(251, 191, 36, 0.85);
+  }
+  .mode-switch-link.urban {
+      border-color: rgba(34, 211, 238, 0.5);
+      background: rgba(6, 182, 212, 0.14);
+      color: #A5F3FC !important;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.18);
+  }
+  .mode-switch-link.urban:hover {
+      background: rgba(6, 182, 212, 0.26);
+      box-shadow: 0 0 32px rgba(34, 211, 238, 0.48);
+      border-color: rgba(34, 211, 238, 0.85);
   }
 
   /* ---- Value banner ---- */
@@ -820,35 +854,38 @@ def _chart_roi_comparison(roi: dict) -> go.Figure:
 # SIDEBAR
 # ============================================================================
 
-def _render_sidebar() -> tuple[float, float, str, float, dict]:
+def _render_sidebar(mode: str) -> tuple[float, float, str, float, dict]:
     """Render sidebar controls; return (lat, lon, hub_name, budget_cr, toggles)."""
+    is_border = mode == "border_security"
+    preset_dict = BORDER_SECTORS if is_border else PRESET_HUBS
     with st.sidebar:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align:center;padding:8px 0 12px 0">
-          <div style="font-size:1.5rem">🛰️</div>
-          <div style="font-size:0.9rem;font-weight:800;color:#06B6D4;letter-spacing:1px">
+          <div style="font-size:1.5rem">{"🛡️" if is_border else "🛰️"}</div>
+          <div style="font-size:0.9rem;font-weight:800;color:{"#FBBF24" if is_border else "#06B6D4"};letter-spacing:1px">
             URBANPULSE AI
           </div>
-          <div style="font-size:0.65rem;color:#475569;letter-spacing:2px;text-transform:uppercase">
-            Control Center
+          <div style="font-size:0.65rem;color:#94A3B8;letter-spacing:1.5px;text-transform:uppercase">
+            {"Border & Perimeter Security" if is_border else "Urban Migration & Sprawl"}
           </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown('<div class="section-head">📍 Analysis Location</div>', unsafe_allow_html=True)
 
-        hub_names = ["— Live Custom Search —"] + list(PRESET_HUBS.keys())
+        hub_names = ["— Live Custom Search —"] + list(preset_dict.keys())
         selected_hub = st.selectbox(
-            "Karnataka Preset Hub",
+            "Border & Defense Sector" if is_border else "Karnataka Preset Hub",
             hub_names,
             index=1,
+            key=f"hub_select_{mode}",
             help="Select a pre-cached preset for instant loading, or use Live Custom Search below.",
         )
 
         lat, lon, hub_name = None, None, selected_hub
 
         if selected_hub != "— Live Custom Search —":
-            hub = PRESET_HUBS[selected_hub]
+            hub = preset_dict[selected_hub]
             lat, lon = hub["lat"], hub["lon"]
             st.markdown(f"""
             <div style="background:#0A1020;border:1px solid #1E3A5F;border-radius:8px;
@@ -922,18 +959,44 @@ def _render_sidebar() -> tuple[float, float, str, float, dict]:
 def main():
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    # --- Sidebar ---
-    lat, lon, hub_name, budget_cr, toggles = _render_sidebar()
+    # Sync ?mode= query param with session_state
+    qp_mode = st.query_params.get("mode", "urban_pulse")
+    if qp_mode not in ("urban_pulse", "border_security"):
+        qp_mode = "urban_pulse"
+    st.session_state["app_mode"] = qp_mode
+    mode = st.session_state["app_mode"]
+    is_border = mode == "border_security"
 
-    # --- Header ---
-    coord_str = f"{lat:.4f}°N · {lon:.4f}°E" if (lat is not None and lon is not None) else "STANDBY"
+    # --- Sidebar ---
+    lat, lon, hub_name, budget_cr, toggles = _render_sidebar(mode)
+
+    # --- Header with Hover-Animated Mode Switch Link ---
+    if is_border:
+        eyebrow = "AEROMANIA '26 // DUAL-USE ORBITAL SURVEILLANCE // BORDER & PERIMETER SECURITY"
+        title_txt = "🛡️ UrbanPulse AI — Border & Perimeter Security"
+        sub_txt = "Multi-Sensor Orbital Surveillance for Perimeter Encroachment & Patrol Routing"
+        switch_html = (
+            '<a class="mode-switch-link urban" href="?mode=urban_pulse" target="_self" '
+            'title="Hover/Click to switch back to UrbanPulse: Urban Migration & Sprawl">'
+            '🏙️ ← UrbanPulse: Migration & Sprawl</a>'
+        )
+    else:
+        eyebrow = "AEROMANIA '26 // ORBIT-TO-ECONOMY // URBANPULSE: URBAN MIGRATION & SPRAWL"
+        title_txt = "🛰️ UrbanPulse AI — Urban Migration & Sprawl"
+        sub_txt = "Multi-Sensor Orbital Intelligence for Urban Migration & Infrastructure Planning"
+        switch_html = (
+            '<a class="mode-switch-link" href="?mode=border_security" target="_self" '
+            'title="Hover/Click to switch to Border & Perimeter Encroachment Surveillance">'
+            '🛡️ Border & Perimeter Security →</a>'
+        )
+
     st.markdown(f"""
     <div class="header-strip">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
         <div>
-          <div class="eyebrow-tag">AEROMANIA '26 // ORBIT-TO-ECONOMY // TRACK A MISSION CONTROL</div>
-          <div class="header-title">🛰️ UrbanPulse AI</div>
-          <div class="header-subtitle">Multi-Sensor Orbital Intelligence for Urban Migration &amp; Infrastructure Planning</div>
+          <div class="eyebrow-tag">{eyebrow}</div>
+          <div class="header-title">{title_txt}</div>
+          <div class="header-subtitle">{sub_txt}</div>
           <div style="margin-top:4px">
             <span class="sensor-pill active">▲ SENTINEL-2 L2A</span>
             <span class="sensor-pill active">◈ SENTINEL-1 SAR</span>
@@ -941,26 +1004,32 @@ def main():
             <span class="sensor-pill active">⬡ OSM ARTERIAL GRAPH</span>
           </div>
         </div>
-        <div class="telemetry-badge">
-          <div><span class="status-dot"></span><span style="color:#4ADE80;font-weight:700">EO LINK NOMINAL</span></div>
-          <div>TARGET: <span style="color:#E2E8F0">{coord_str}</span></div>
-          <div>SWATH: <span style="color:#38BDF8">12×12 KM · 250M GRID</span></div>
-          <div style="color:#64748B">BOEING EXECUTIVE BRIEF</div>
-        </div>
+        <div>{switch_html}</div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- Value Banner ---
-    st.markdown("""
-    <div class="value-banner">
-      <strong>💼 Who Pays & Economic Value:</strong>
-      Urban Development Authorities (BDA · TUDA · MUDA · NMMC) & Municipal Corporations pay for
-      UrbanPulse AI to <strong>lock in transit & power corridors before encroachment</strong> —
-      saving ₹ Crores by acting early instead of demolishing and retrofitting 3 years later at
-      <strong>3.4× the cost.</strong>
-    </div>
-    """, unsafe_allow_html=True)
+    # --- Dynamic Value Banner ---
+    if is_border:
+        st.markdown("""
+        <div class="value-banner">
+          <strong>💼 Who Pays & Strategic Value:</strong>
+          Border Security Forces (<strong>BSF</strong>), <strong>Ministry of Defence (MoD)</strong>, and
+          <strong>Defense Estates</strong> pay for automated dual-use satellite surveillance to
+          <strong>detect unlit perimeter encroachment early & optimize patrol/smart-fence routing</strong> —
+          at <strong>3.4× lower lifecycle cost.</strong>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div class="value-banner">
+          <strong>💼 Who Pays & Economic Value:</strong>
+          Urban Development Authorities (<strong>BDA · TUDA · MUDA · NMPA</strong>) & Municipal Corporations pay for
+          UrbanPulse AI to <strong>lock in transit & power corridors before encroachment</strong> —
+          saving ₹ Crores by acting early instead of demolishing and retrofitting 3 years later at
+          <strong>3.4× the cost.</strong>
+        </div>
+        """, unsafe_allow_html=True)
 
     # --- Guard: no location selected yet ---
     if lat is None or lon is None:
@@ -999,12 +1068,20 @@ def main():
     net_sav_m   = roi.get("net_savings_usd_m", 0)
 
     c1, c2, c3, c4 = st.columns(4)
-    kpi_cards = [
-        (c1, "cyan",  f"{new_built:.1f} km²",                      "New Built-Up Growth",      f"Prevented Slum Sprawl: {sprawl_prev:.1f} km²"),
-        (c2, "red",   f"{n_nlg:,}",                                 "Night-Light Gap Alerts",   f"{nlg_area:.1f} km² underserved · {roi.get('n_funded', 0)} corridors"),
-        (c3, "amber", f"{unmit_inf/1000:.1f}K",                     "2027–28 Predicted Influx", f"Total {influx/1000:.1f}K · {influx_cov/1000:.1f}K sheltered"),
-        (c4, "green", f"₹{net_sav_cr:.0f} Cr / ${net_sav_m:.1f}M", "Net Planner Savings",      f"Act now vs. 3.4× retrofit · {cov_pct:.0f}% cov"),
-    ]
+    if is_border:
+        kpi_cards = [
+            (c1, "cyan",  f"{new_built:.1f} km²",                      "New Perimeter Structures (2021–26)", f"Protected Buffer Saved: {sprawl_prev:.1f} km²"),
+            (c2, "red",   f"{n_nlg:,}",                                 "Unlit / Covert Encroachment Alerts", f"{nlg_area:.1f} km² flagged · {roi.get('n_funded', 0)} patrol links"),
+            (c3, "amber", f"{unmit_inf/1000:.1f}K",                     "2027–28 Infiltration / Encroachment Risk", f"Baseline {influx/1000:.1f}K · {influx_cov/1000:.1f}K monitored"),
+            (c4, "green", f"₹{net_sav_cr:.0f} Cr / ${net_sav_m:.1f}M", "Surveillance & Patrol Savings (₹ Cr)", f"Cueing vs. manual patrol · {cov_pct:.0f}% cov"),
+        ]
+    else:
+        kpi_cards = [
+            (c1, "cyan",  f"{new_built:.1f} km²",                      "New Built-Up Growth",      f"Prevented Slum Sprawl: {sprawl_prev:.1f} km²"),
+            (c2, "red",   f"{n_nlg:,}",                                 "Night-Light Gap Alerts",   f"{nlg_area:.1f} km² underserved · {roi.get('n_funded', 0)} corridors"),
+            (c3, "amber", f"{unmit_inf/1000:.1f}K",                     "2027–28 Predicted Influx", f"Total {influx/1000:.1f}K · {influx_cov/1000:.1f}K sheltered"),
+            (c4, "green", f"₹{net_sav_cr:.0f} Cr / ${net_sav_m:.1f}M", "Net Planner Savings",      f"Act now vs. 3.4× retrofit · {cov_pct:.0f}% cov"),
+        ]
     for col, color, val, label, delta in kpi_cards:
         with col:
             st.markdown(f"""
@@ -1039,7 +1116,7 @@ def main():
     tab1, tab2, tab3 = st.tabs([
         "📡 Multi-Sensor Proof & AI Accuracy",
         "🗂️ Planner Blueprint & Export",
-        "🏗️ Orbit-to-Economy Architecture",
+        "🏗️ Multi-Sector System Architecture",
     ])
 
     # --- Tab 1: Multi-Sensor Proof ---
@@ -1160,8 +1237,8 @@ def main():
     with tab3:
         st.markdown("""
         <div style="margin-bottom:12px;font-size:0.82rem;color:#64748B;line-height:1.6">
-          How <b style="color:#06B6D4">UrbanPulse AI</b> feeds directly into the unified
-          <b>5-person Track A platform</b> — from raw satellite orbit to economic planning outputs.
+          How <b style="color:#06B6D4">UrbanPulse AI</b> powers both
+          <b>Urban Migration &amp; Sprawl</b> and <b>Border &amp; Perimeter Security</b> from raw satellite orbit to actionable outputs.
         </div>
         """, unsafe_allow_html=True)
 
@@ -1200,12 +1277,12 @@ def main():
         st.markdown("""
         <div style="margin-top:16px;background:#0F172A;border:1px solid #1E3A5F;border-radius:8px;
                     padding:14px 18px;font-size:0.78rem;color:#64748B;line-height:1.7">
-          <b style="color:#06B6D4">Team Track A — 5 Modules:</b><br>
+          <b style="color:#06B6D4">Multi-Sector Orbit-to-Economy Modules:</b><br>
           🛰 UrbanPulse AI (Migration & Urbanization) ·
-          🌊 FloodSense (Disaster Risk) ·
-          🌾 AgroSat (Agricultural Monitoring) ·
-          🏗 InfraScope (Infrastructure Change) ·
-          📡 TrafficOrbit (Road & Rail Demand)
+          🛡️ Border & Perimeter Security (BSF / MoD) ·
+          🌊 ClaimPulse (Disaster Risk) ·
+          🌾 Eco_Act (Economic Nowcast) ·
+          📡 LEO_Sim (Onboard AI)
         </div>
         """, unsafe_allow_html=True)
 
