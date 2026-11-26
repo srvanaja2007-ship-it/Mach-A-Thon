@@ -188,7 +188,7 @@ def render_plot_metrics(hist_df, pred_df, zones, output_path, region_name="Tumku
     plt.close()
     print(f"[Visualizer] Saved metrics forecast plot to: {output_path}")
 
-def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamps_hist, images_future, years_future, zones, optical_path, output_path, region_name="Tumkur", base_gddp=32000.0):
+def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamps_hist, images_future, years_future, zones, optical_path, output_path, region_name="Tumkur", base_gddp=32000.0, table_filename=None):
     """
     Creates standalone interactive HTML dashboard featuring:
     - Side-by-side Optical Satellite View (or baseline frame) vs Night Lights
@@ -384,6 +384,15 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
         .badge-success {{ background: rgba(63, 185, 80, 0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }}
         .badge-warning {{ background: rgba(240, 136, 62, 0.15); color: var(--accent-orange); border: 1px solid var(--accent-orange); }}
         .badge-info {{ background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue); }}
+        .header-actions {{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }}
+        .nav-btn {{
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #1f6feb, #388bfd);
+            color: #ffffff; text-decoration: none; font-weight: 600; font-size: 13px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(88, 166, 255, 0.5);
+            box-shadow: 0 2px 10px rgba(31, 111, 235, 0.3); transition: transform 0.15s, box-shadow 0.15s;
+        }}
+        .nav-btn:hover {{ transform: translateY(-1px); box-shadow: 0 4px 14px rgba(56, 139, 253, 0.45); }}
     </style>
 </head>
 <body>
@@ -393,7 +402,10 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
             <h1>Orbit to Economy: {region_name} (Spatio-Temporal AI)</h1>
             <p>Satellite Night Lights (VIIRS) Economic Nowcasting &amp; {fut_end_yr} Projections</p>
         </div>
-        <div class="badge-track">Track A: Read the Planet &bull; Boeing Aeromania '26</div>
+        <div class="header-actions">
+            <div class="badge-track">Track A: Read the Planet &bull; Boeing Aeromania '26</div>
+            {f'<a href="{table_filename}" class="nav-btn">&#128202; View Predictions &amp; Table &rarr;</a>' if table_filename else ''}
+        </div>
     </div>
 
     <div class="grid">
@@ -545,7 +557,7 @@ def generate_interactive_html_dashboard(hist_df, pred_df, images_hist, timestamp
     print(f"[Visualizer] Generated interactive dashboard at: {output_path}")
 
 
-def generate_predictions_table_html(hist_df, pred_df, zones, output_path, region_name="Tumkur"):
+def generate_predictions_table_html(hist_df, pred_df, zones, output_path, region_name="Tumkur", dashboard_filename=None):
     """
     Generates a standalone tabular HTML report of AI economic forecasts,
     opportunity zone rankings, and actionable development suggestions.
@@ -654,12 +666,28 @@ def generate_predictions_table_html(hist_df, pred_df, zones, output_path, region
   .flat {{ color: var(--yellow); font-weight: 600; }}
   .bar-wrap {{ width: 110px; background: #21272f; border-radius: 4px; height: 7px; }}
   .bar-fill {{ height: 7px; border-radius: 4px; }}
+  .top-bar {{ display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }}
+  .top-bar .subtitle {{ margin-bottom: 0; }}
+  .nav-btn {{
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #1f6feb, #388bfd);
+    color: #ffffff; text-decoration: none; font-weight: 600; font-size: 0.85rem;
+    padding: 9px 16px; border-radius: 8px; border: 1px solid rgba(88, 166, 255, 0.5);
+    box-shadow: 0 2px 10px rgba(31, 111, 235, 0.3); white-space: nowrap;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }}
+  .nav-btn:hover {{ transform: translateY(-1px); box-shadow: 0 4px 14px rgba(56, 139, 253, 0.45); }}
   footer {{ margin-top: 48px; color: var(--muted); font-size: 0.75rem; border-top: 1px solid var(--border); padding-top: 16px; }}
 </style>
 </head>
 <body>
-<h1>🛰️ {region_name} — AI Predictions &amp; Suggestions</h1>
-<p class="subtitle">Track A · Boeing Aeromania '26 · Auto-generated from {n_frames} satellite frames ({start_yr}–{end_yr})</p>
+<div class="top-bar">
+  <div>
+    <h1>🛰️ {region_name} — AI Predictions &amp; Suggestions</h1>
+    <p class="subtitle">Track A · Boeing Aeromania '26 · Auto-generated from {n_frames} satellite frames ({start_yr}–{end_yr})</p>
+  </div>
+  {f'<a href="{dashboard_filename}" class="nav-btn">&#128752;&#65039; Open Interactive Dashboard &rarr;</a>' if dashboard_filename else ''}
+</div>
 
 <section>
   <h2>📈 Economic Activity Forecast</h2>

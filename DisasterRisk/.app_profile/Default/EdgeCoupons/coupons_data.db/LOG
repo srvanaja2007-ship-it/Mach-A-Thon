@@ -1,0 +1,15 @@
+2026/11/26-06:51:27.095 9b10 Reusing MANIFEST C:\Users\Sam\OneDrive\Desktop\Mach-A-Thon\Mach-A-Thon\DisasterRisk\.app_profile\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/11/26-06:51:27.100 9b10 Recovering log #16
+2026/11/26-06:51:27.102 9b10 Reusing old log C:\Users\Sam\OneDrive\Desktop\Mach-A-Thon\Mach-A-Thon\DisasterRisk\.app_profile\Default\EdgeCoupons/coupons_data.db/000016.log 
+2026/11/26-06:51:27.820 a008 Level-0 table #20: started
+2026/11/26-06:51:27.828 a008 Level-0 table #20: 683376 bytes OK
+2026/11/26-06:51:27.839 a008 Delete type=0 #16
+2026/11/26-06:51:27.842 9d9c Compacting 4@0 + 1@1 files
+2026/11/26-06:51:27.850 9d9c Generated table #21@0: 3 keys, 683376 bytes
+2026/11/26-06:51:27.850 9d9c Compacted 4@0 + 1@1 files => 683376 bytes
+2026/11/26-06:51:27.853 9d9c compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/11/26-06:51:27.854 9d9c Delete type=2 #8
+2026/11/26-06:51:27.854 9d9c Delete type=2 #11
+2026/11/26-06:51:27.854 9d9c Delete type=2 #14
+2026/11/26-06:51:27.854 9d9c Delete type=2 #17
+2026/11/26-06:51:27.854 9d9c Delete type=2 #20
