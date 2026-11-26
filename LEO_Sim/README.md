@@ -1,41 +1,30 @@
-# LEO Satellite Onboard AI Processing & Intelligent Data Transmission
+# LEO Satellite Mission Control
 
-This repository extends the existing **Eco_Act** project to simulate a Low‑Earth‑Orbit (LEO) satellite that processes VIIRS nighttime imagery onboard and transmits only compact economic insights.
+Streamlit dashboard for the existing Eco_Act, UrbanPulse, and DisasterRisk
+projects. It combines the original application pipelines with an orbital
+visibility model, a priority downlink queue, and a ground-station view.
 
-## Project Structure
-```
-LEO_Sim/
-├─ eco_act_adapter/      # Thin wrappers around Eco_Act modules
-├─ onboard_processor/   # Runs Eco_Act analysis on a given image
-├─ image_acquisition/   # Streamlit UI for image upload / selection
-├─ orbit/               # Simple Keplerian orbit utilities
-├─ satellite_simulation/ # Earth visualisation & satellite animation
-├─ insight_extraction/  # Convert raw metrics into JSON payload
-├─ payload_generator/   # Serialise payload & measure size
-├─ communication_simulator/ # Transmission time & progress simulation
-├─ ground_station/      # Dashboard for received payload & stats
-├─ dashboard/           # Streamlit multi‑page app entry point
-├─ reports/             # Auto‑generated comparison charts
-├─ tests/               # Unit / integration tests
-└─ requirements.txt
+## Run
+
+From the `Mach-A-Thon` directory:
+
+```powershell
+..\.venv\Scripts\streamlit.exe run LEO_Sim\app.py
 ```
 
-## Setup
-```bash
-python -m venv .venv
-source .venv/Scripts/activate   # Windows
-pip install -r requirements.txt
-```
+The verified environment is Python 3.14 with NumPy 2.5.5. Use the project
+virtual environment so UrbanPulse caches written with NumPy 2 remain readable.
 
-## Run the demo
-```bash
-streamlit run dashboard/app.py
-```
+## Data and status rules
 
-## Assumptions
-* LEO altitude: **500 km** (≈ 92 min orbital period).
-* Communication bandwidth: **2 Mbps** (default, configurable in UI).
-* Ground station location: **India (lat 20.59 N, lon 78.96 E)**.
+- Eco_Act runs its existing VIIRS image analysis on files in
+  `Eco_Act/Dataset/monthly_10yr`.
+- UrbanPulse uses its existing multi-layer pipeline. The onboard adapter
+  refuses inference if any required source layer is missing or synthetic.
+- DisasterRisk's current preset connector is demo data. The onboard adapter
+  reports that blocker and refuses to emit a risk payload.
+- The orbit and radio link are simulated. Input sizes and JSON sizes are
+  measured from the actual file/serialization when eligible inference runs.
 
----
-*The original Eco_Act code remains untouched; all new functionality lives under `LEO_Sim/`.*
+See [PERFORMANCE_REPORT.md](PERFORMANCE_REPORT.md) for the latest verified
+measurements and current source blockers.

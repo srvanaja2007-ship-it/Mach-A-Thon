@@ -1,52 +1,42 @@
-# LEO simulator technical audit
+# LEO_Sim technical audit
 
-## Scope
+## Current verified state
 
-The existing entry point is [app.py](./app.py). It calls the circular-orbit
-model in `src/orbit.py`, the Eco_Act adapters through
-`onboard_processor/processor.py`, and byte-based transmission calculations in
-`src/communication.py`.
+- `onboard_processor/application_runner.py` validates each application's
+  required arguments and finite WGS84 coordinates.
+- Eco_Act executes its original analysis pipeline against the selected VIIRS
+  image and reports measured file bytes and processing time.
+- UrbanPulse's existing fetch pipeline silently falls back to synthetic layers.
+  The onboard adapter now checks source metadata before calling its existing
+  ML pipeline and rejects missing or synthetic layers.
+- DisasterRisk's preset connector calls `build_scenario_raw_data`, whose
+  presets are marked `is_demo=True`. The onboard adapter rejects that input
+  before running hazard, exposure, loss, or decision calculations.
+- JSON payloads include the application identifier. The queue orders HIGH,
+  MEDIUM, LOW; it retains items when the link is unavailable or a complete
+  payload does not fit the contact window.
+- Link visibility uses ECEF position and ground-station look angles with a
+  five-degree elevation mask. The UI dispatch path uses the remaining pass
+  duration sampled against that mask, not a fixed contact allowance.
 
-## Findings and priority
+## Orbital/link model limits
 
-1. **High — visibility data was incomplete.** The app showed only a boolean
-   line-of-sight result. Distance, elevation, azimuth, elevation-mask control,
-   and next contact were not exposed. These are now calculated from ECEF
-   coordinates and the ground-station ENU frame.
-2. **High — adaptive transmission was absent.** Payloads had no queue or
-   priority scheduling. `src/transmission_queue.py` now orders HIGH, MEDIUM,
-   and LOW payloads and defers them when no contact or insufficient contact
-   budget exists.
-3. **Medium — Urbanization was a separate application.** Its existing
-   `run_ml_pipeline(data)` contract consumes aligned geospatial feature layers,
-   not a standalone image. `urbanization_adapter` reports that exact boundary
-   and requirements instead of fabricating a prediction.
-4. **Medium — orbit API was presentation-oriented.** The existing model used
-   a spherical ground-track projection and had no reusable ECI/ECEF/look-angle
-   API. The original UI remains, with the physically meaningful APIs added.
-5. **Low — documentation drift.** The README listed directories that are not
-   present; this audit records the actual architecture and assumptions.
+The simulator uses circular two-body propagation with an approximate RAAN
+drift and spherical Earth. Contact duration is sampled at one-second steps.
+The model excludes J2, drag, attitude, link budget losses, coding overhead,
+weather, and actual modem behavior. Transfer duration is a calculated
+simulation value, not a measured radio transmission.
 
-## Verified existing workflow
+## Remaining source blockers
 
-Dataset selection or upload sets `session_state["image_path"]`; pressing Run
-invokes the Eco_Act adapter pipeline on that exact path. Payload bytes are
-serialized with UTF-8 JSON, and raw size comes from `os.path.getsize`.
+1. **UrbanPulse:** all checked-in location caches use `synthetic_physics` for
+   all required layers. An isolated live refresh fetched Sentinel-2 scenes
+   from 2021 and 2026, Sentinel-1 RTC, and a WorldCover electricity proxy. The
+   required OSM road/water query to Overpass did not complete. The full model
+   was not run; no partial-source predictions are emitted.
+2. **DisasterRisk:** the adapter only exposes the scenario connector. The
+   connector returns demo-generated event data, so there is no compatible
+   observation acquisition path from which to generate a real risk result.
 
-## Equations and assumptions
-
-- `a = R_e + h`
-- `T = 2π √(a³ / μ)`
-- `v = √(μ / a)`
-- ECI is rotated into ECEF by Earth’s sidereal rotation rate.
-- Ground-station coordinates use a spherical Earth radius of 6371 km.
-- Contact is available when calculated elevation is at least the configured
-  elevation mask.
-- This remains a simulated two-body circular orbit. It omits J2 perturbations,
-  drag, ephemeris errors, attitude, link losses, coding overhead, and weather.
-
-## Metric validation
-
-Raw and JSON sizes are actual serialized byte counts. Transmission time is
-calculated as `bytes * 8 / (Mbps * 1,000,000)`. Reduction is
-`(raw - JSON) / raw * 100`; no 97.3% or 36× value is hardcoded.
+See [PERFORMANCE_REPORT.md](PERFORMANCE_REPORT.md) for measured Eco_Act bytes,
+processing time, and simulated transfer calculations.

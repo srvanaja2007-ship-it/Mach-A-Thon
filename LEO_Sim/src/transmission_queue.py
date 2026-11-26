@@ -48,14 +48,21 @@ class TransmissionQueue:
     def dispatch(self, visible: bool, bandwidth_mbps: float, contact_seconds: float) -> dict:
         if bandwidth_mbps <= 0 or contact_seconds < 0:
             raise ValueError("bandwidth must be positive and contact_seconds non-negative")
-        budget_bytes = bandwidth_mbps * 1_000_000 / 8.0 * contact_seconds
+        bytes_per_second = bandwidth_mbps * 1_000_000 / 8.0
+        budget_bytes = bytes_per_second * contact_seconds
         sent, deferred = [], []
-        remaining = budget_bytes
+        remaining_seconds = contact_seconds
+        elapsed_contact_seconds = 0.0
         for item in self.pending():
             required = len(item.payload)
-            if visible and required <= remaining:
+            duration = required / bytes_per_second
+            if visible and duration <= remaining_seconds:
+                item.metadata["simulated_transmit_duration_s"] = duration
+                item.metadata["simulated_transmit_start_offset_s"] = elapsed_contact_seconds
+                item.metadata["simulated_receive_offset_s"] = elapsed_contact_seconds + duration
                 sent.append(item)
-                remaining -= required
+                remaining_seconds -= duration
+                elapsed_contact_seconds += duration
             else:
                 deferred.append(item)
         sent_ids = {id(item) for item in sent}
@@ -65,7 +72,8 @@ class TransmissionQueue:
             "budget_bytes": round(budget_bytes, 3),
             "sent": sent,
             "deferred": deferred,
-            "remaining_bytes": round(remaining, 3),
+            "remaining_bytes": round(remaining_seconds * bytes_per_second, 3),
+            "remaining_contact_seconds": round(remaining_seconds, 6),
         }
 
     def snapshot(self) -> list[dict[str, Any]]:
