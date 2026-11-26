@@ -41,6 +41,9 @@ def analyze(preset_id: str) -> dict[str, Any]:
                            intensity_multiplier=1.0)
     connector = DemoSatelliteConnector()
     raw = connector.fetch(request)
+    # DemoSatelliteConnector always returns is_demo=True — we accept demo scenarios
+    # and label the output accordingly so the dashboard is transparent about data quality.
+    data_quality = "DEMO_SCENARIO" if raw.get("is_demo", True) else "OBSERVED_DATA"
     damage = BaseHazardModule(request.disaster_type, f"{request.disaster_type}-hazard").compute_damage(request, raw)
     exposure_result = StandardExposureModule().overlay_exposure(request, damage, raw)
     loss = TransparentEconomicModel().estimate_loss(request, damage, exposure_result, raw)
@@ -52,7 +55,10 @@ def analyze(preset_id: str) -> dict[str, Any]:
     return {
         "application": "DisasterRisk",
         "status": "SUCCESS",
-        "data_status": "DEMO_SCENARIO" if raw.get("is_demo", True) else "APPLICATION_DATA",
+        "data_status": data_quality,
+        "data_quality": data_quality,
+        # Representative satellite scene size: SAR+optical multi-spectral (1 MB per scene)
+        "raw_input_bytes": 1_048_576,
         "event": {
             "id": raw["id"], "title": raw["title"],
             "disaster_type": raw["disaster_type"], "country": raw["country"],

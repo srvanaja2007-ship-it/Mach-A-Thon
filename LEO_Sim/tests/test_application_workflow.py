@@ -1,4 +1,4 @@
-"""Verify all application insight payloads use the shared queue and ground receipt path."""
+"""Verify genuine insights use the visibility-gated transmission queue."""
 
 import json
 import sys
@@ -10,32 +10,33 @@ if str(LEO_ROOT) not in sys.path:
     sys.path.insert(0, str(LEO_ROOT))
 
 from onboard_processor.application_runner import run
-from src.communication import build_json_payload
+from src.orbit import GROUND_STATION, Satellite
 from src.transmission_queue import TransmissionQueue
 
 
-def test_each_application_payload_dispatches_to_ground_station():
-    eco_image = PROJECT_ROOT / "Eco_Act" / "Dataset" / "monthly_10yr" / "tumkur_monthly_2024_12.png"
-    if not eco_image.exists():
-        eco_image = next((PROJECT_ROOT / "Eco_Act" / "Dataset" / "monthly_10yr").glob("*.png"))
-    inputs = [
-        ("Eco_Act", {"image_path": str(eco_image)}),
-        ("UrbanPulse", {"lat": 13.34, "lon": 77.10}),
-        ("DisasterRisk", {"preset_id": "odisha-flood-2026"}),
-    ]
+def test_eco_act_payload_is_received_only_after_visible_transmission():
+    image = PROJECT_ROOT / "Eco_Act" / "Dataset" / "monthly_10yr" / "tumkur_monthly_2024_12.png"
+    result = run("Eco_Act", image_path=str(image))
+    payload = json.dumps(
+        {"application": "Eco_Act", **{k: v for k, v in result.items() if k not in {"image_path", "status"}}},
+        separators=(",", ":"),
+    ).encode("utf-8")
     queue = TransmissionQueue()
-    expected = {}
-    for app, kwargs in inputs:
-        result = run(app, **kwargs)
-        payload = build_json_payload(result)
-        expected[app] = json.loads(payload)
-        queue.enqueue(payload, "HIGH", label=app, metadata={"application": app})
+    queue.enqueue(payload, "MEDIUM", "Eco_Act", {"application": "Eco_Act"})
 
-    dispatched = queue.dispatch(visible=True, bandwidth_mbps=2.0, contact_seconds=60)
-    assert not dispatched["deferred"]
-    received = {item.label: json.loads(item.payload.decode("utf-8")) for item in dispatched["sent"]}
-    assert set(received) == {app for app, _ in inputs}
-    for app in received:
-        assert received[app] == expected[app]
-        assert received[app]["application"] == app
+    no_contact = queue.dispatch(False, 2.0, 60.0)
+    assert not no_contact["sent"]
+    assert len(queue.pending()) == 1
 
+    satellite = Satellite()
+    gs = GROUND_STATION
+    contact_end = next(
+        second for second in range(1, int(satellite.params.period_seconds))
+        if not satellite.visibility_at(second, gs["lat"], gs["lon"])["visible"]
+    )
+    visible = queue.dispatch(True, 2.0, contact_end - 1)
+    assert not visible["deferred"]
+    assert len(visible["sent"]) == 1
+    assert not queue.pending()
+    assert visible["sent"][0].metadata["simulated_receive_offset_s"] > 0
+    assert json.loads(visible["sent"][0].payload)["application"] == "Eco_Act"

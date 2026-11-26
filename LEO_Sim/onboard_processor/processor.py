@@ -43,9 +43,10 @@ def run(image_path: str) -> Dict[str, Any]:
 
     t0 = time.perf_counter()
 
-    b_stats = brightness.brightness_stats(image_path)
-    lit_pct = lit_area.percentage(image_path)
-    lit_cnt = lit_area.lit_pixel_count(image_path)
+    b_stats  = brightness.brightness_stats(image_path)
+    lit_full = lit_area.lit_area_full_stats(image_path)
+    lit_pct  = lit_full["standard_lit_pct"]
+    lit_cnt  = lit_area.lit_pixel_count(image_path)
     ind_trend = industrial.trend(image_path)
     ind_ratio = industrial.industrial_pixel_ratio(image_path)
     econ_idx = forecast.economic_index(image_path)
@@ -62,6 +63,7 @@ def run(image_path: str) -> Dict[str, Any]:
         "brightness": b_stats,
         "lit_area_pct": round(lit_pct, 3),
         "lit_pixel_count": lit_cnt,
+        "lit_area_full": lit_full,
         "industrial_activity_trend": ind_trend,
         "industrial_pixel_ratio": round(ind_ratio, 6),
         "economic_activity_index": econ_idx,
