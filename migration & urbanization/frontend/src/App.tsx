@@ -15,9 +15,59 @@ import {
 } from "lucide-react";
 import AnalyticsTabs from "./components/AnalyticsTabs";
 import MissionMap from "./components/MissionMap";
-import type { AnalysisResponse, PresetHub } from "./types";
+import type { AnalysisResponse, PresetHub, RoiResult } from "./types";
 
 type AppMode = "urban_pulse" | "border_security";
+
+function computeRoiClient(res: AnalysisResponse, earlyBudgetCr: number): RoiResult {
+  const corridors = res.corridors || [];
+  if (!corridors.length) return res.roi;
+  const totalNatural = corridors.reduce((s, c) => s + c.cost_cr, 0);
+  const highRiskCells = res.cells.filter((c) => c.sprawl > 0.5).length;
+  const districtCost = Math.max(500.0, totalNatural, res.n_nlg_alerts * 1.45 + highRiskCells * 0.35);
+  const coverageRatio = districtCost > 0 ? Math.min(1.0, earlyBudgetCr / districtCost) : 0.0;
+  const effectiveSpend = Math.min(earlyBudgetCr, districtCost);
+
+  const sorted = [...corridors].sort((a, b) => a.cost_cr - b.cost_cr);
+  let runningCost = 0;
+  let nFunded = 0;
+  let baseHh = 0;
+  for (const c of sorted) {
+    if (runningCost + c.cost_cr <= earlyBudgetCr) {
+      runningCost += c.cost_cr;
+      nFunded += 1;
+      baseHh += c.served_hh;
+    }
+  }
+  if (nFunded === 0) {
+    nFunded = 1;
+    runningCost = Math.min(earlyBudgetCr, sorted[0].cost_cr);
+    baseHh = sorted[0].served_hh;
+  }
+
+  const sprawlPrevented = res.nlg_area_sqkm * coverageRatio * 0.72;
+  const influxCovered = Math.floor(res.influx_2027_28 * coverageRatio * 0.65);
+  const unmitigatedInflux = Math.max(0, res.influx_2027_28 - influxCovered);
+  const feederHh = Math.floor(Math.max(0, effectiveSpend - runningCost) * 180);
+  const deferredCost = effectiveSpend * 3.4;
+  const netSavingsCr = Number((deferredCost - effectiveSpend).toFixed(2));
+  const netSavingsUsdM = Number(((netSavingsCr * 1e7) / 83.5 / 1e6).toFixed(2));
+
+  return {
+    early_budget_cr: Number(earlyBudgetCr.toFixed(1)),
+    n_funded: nFunded,
+    total_funded_cost_cr: Number(effectiveSpend.toFixed(2)),
+    deferred_cost_cr: Number(deferredCost.toFixed(2)),
+    net_savings_cr: netSavingsCr,
+    net_savings_usd_m: netSavingsUsdM,
+    roi_ratio: effectiveSpend > 0 ? Number((deferredCost / effectiveSpend).toFixed(2)) : 0,
+    sprawl_prevented_sqkm: Number(sprawlPrevented.toFixed(2)),
+    influx_covered: influxCovered,
+    unmitigated_influx: unmitigatedInflux,
+    hh_connected: baseHh + feederHh,
+    coverage_ratio: Number((coverageRatio * 100).toFixed(1)),
+  };
+}
 
 function getInitialMode(): AppMode {
   const params = new URLSearchParams(window.location.search);
@@ -46,10 +96,14 @@ export default function App() {
 
   const activePresetMap = mode === "border_security" ? borderSectors : urbanPresets;
 
-  // 1. Load urban hubs + border sectors on mount
+  // 1. Load urban hubs + border sectors on mount (with static Vercel fallback)
   useEffect(() => {
     fetch("/api/presets")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("API unavailable");
+        return r.json();
+      })
+      .catch(() => fetch("/data/presets.json").then((r) => r.json()))
       .then((res) => {
         const hubs: Record<string, PresetHub> = res.presets || {};
         const sectors: Record<string, PresetHub> = res.border_sectors || {};
@@ -68,7 +122,7 @@ export default function App() {
         }
       })
       .catch((e) => {
-        setError(`Failed to connect to UrbanPulse API: ${e.message}`);
+        setError(`Failed to load UrbanPulse presets: ${e.message}`);
         setLoading(false);
       });
   }, []);
@@ -94,7 +148,7 @@ export default function App() {
     }
   };
 
-  // 2. Run full analysis when activeCoords changes
+  // 2. Run full analysis when activeCoords changes (with static Vercel fallback)
   useEffect(() => {
     if (!activeCoords) return;
     setLoading(true);
@@ -104,8 +158,14 @@ export default function App() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
+      .catch(() =>
+        fetch(`/data/${activeCoords.lat.toFixed(4)}_${activeCoords.lon.toFixed(4)}.json`).then((r) => {
+          if (!r.ok) throw new Error("Custom live scan requires local Python backend");
+          return r.json();
+        })
+      )
       .then((res: AnalysisResponse) => {
-        setData(res);
+        setData({ ...res, roi: computeRoiClient(res, budgetCr) });
         setLoading(false);
       })
       .catch((e) => {
@@ -117,13 +177,14 @@ export default function App() {
   // 3. Instant ROI update when budget slider changes
   const handleBudgetChange = (val: number) => {
     setBudgetCr(val);
+    setData((prev) => (prev ? { ...prev, roi: computeRoiClient(prev, val) } : prev));
     if (!activeCoords) return;
     if (roiDebounceRef.current) window.clearTimeout(roiDebounceRef.current);
     roiDebounceRef.current = window.setTimeout(() => {
       fetch(`/api/roi?lat=${activeCoords.lat}&lon=${activeCoords.lon}&budget_cr=${val}`)
-        .then((r) => r.json())
+        .then((r) => (r.ok ? r.json() : null))
         .then((res) => {
-          if (res.roi) {
+          if (res?.roi) {
             setData((prev) => (prev ? { ...prev, roi: res.roi } : prev));
           }
         })
