@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: machathon-orbit-portal
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r "main website/requirements.txt"
+    startCommand: 'cd "main website" && uvicorn portal:app --host 0.0.0.0 --port $PORT'
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: URBANIZATION_URL
+        value: https://machathon-urbanpulse.onrender.com
+      - key: DISASTER_URL
+        value: https://machathon-claimpulse.onrender.com
+      - key: LEO_SIM_URL
+        value: https://machathon-leo-sim.onrender.com
+
+  - type: web
+    name: machathon-urbanpulse
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: 'pip install -r "migration & urbanization/requirements.txt" && cd "migration & urbanization/frontend" && npm ci && npm run build'
+    startCommand: 'cd "migration & urbanization" && uvicorn api_server:app --host 0.0.0.0 --port $PORT'
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+
+  - type: web
+    name: machathon-claimpulse
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: 'pip install -r DisasterRisk/requirements.txt && cd DisasterRisk/frontend && npm ci && npm run build'
+    startCommand: 'cd DisasterRisk && uvicorn backend.main:app --host 0.0.0.0 --port $PORT'
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+
+  - type: web
+    name: machathon-leo-sim
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r LEO_Sim/requirements.txt
+    startCommand: 'cd LEO_Sim && streamlit run app.py --server.address 0.0.0.0 --server.port $PORT --server.headless true'
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8

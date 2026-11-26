@@ -6,6 +6,7 @@ Strictly self-contained inside `main website/` — launches & links all 5 team m
 
 from __future__ import annotations
 
+import os
 import socket
 import subprocess
 import sys
@@ -73,16 +74,35 @@ async def home(request: Request) -> FileResponse:
     return FileResponse(MAIN_DIR / "index.html")
 
 
+async def health(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok"})
+
+
+def _configured_url(module_id: str) -> str | None:
+    url = os.getenv(f"{module_id.upper()}_URL")
+    if not url:
+        return None
+    if not url.startswith(("http://", "https://")):
+        return f"https://{url}"
+    return url.rstrip("/")
+
+
 async def status(request: Request) -> JSONResponse:
     out = {}
     for mid, cfg in MODULES.items():
-        running = True if cfg["cmd"] is None else _is_port_open(cfg["port"])
+        configured_url = _configured_url(mid)
+        running = (
+            True
+            if configured_url or cfg["cmd"] is None
+            else _is_port_open(cfg["port"])
+        )
         out[mid] = {
             "name": cfg["name"],
             "folder": cfg["folder"],
-            "url": cfg["url"],
+            "url": configured_url or cfg["url"],
             "port": cfg["port"],
             "running": running,
+            "configured": configured_url is not None,
         }
     return JSONResponse({"modules": out})
 
@@ -92,6 +112,10 @@ async def launch_module(request: Request) -> JSONResponse:
     cfg = MODULES.get(mid)
     if not cfg:
         return JSONResponse({"error": "Unknown module"}, status_code=404)
+
+    configured_url = _configured_url(mid)
+    if configured_url:
+        return JSONResponse({"status": "running", "url": configured_url})
 
     if cfg["cmd"] is None:
         return JSONResponse({"status": "ready", "url": cfg["url"]})
@@ -117,6 +141,7 @@ async def launch_module(request: Request) -> JSONResponse:
 
 routes: list[Any] = [
     Route("/", home, methods=["GET"]),
+    Route("/api/health", health, methods=["GET"]),
     Route("/api/status", status, methods=["GET"]),
     Route("/api/launch/{module_id}", launch_module, methods=["POST"]),
 ]

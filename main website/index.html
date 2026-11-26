@@ -283,48 +283,38 @@
 
       const FALLBACK_URLS = {
         urbanization: "https://dist-pi-ivory-36.vercel.app",
-        disaster: "http://127.0.0.1:8000",
-        eco_act: "http://127.0.0.1:9000/eco-act/tumkur_ai_dashboard.html",
-        leo_sim: "http://127.0.0.1:8502",
       };
-      const isLocalHost = ["127.0.0.1", "localhost"].includes(window.location.hostname);
 
       let liveStatus = {};
 
       async function fetchStatus() {
-        if (!isLocalHost) {
-          liveStatus = {
-            urbanization: { running: true, url: FALLBACK_URLS.urbanization },
-            disaster: { running: false, url: FALLBACK_URLS.disaster },
-            eco_act: { running: false, url: FALLBACK_URLS.eco_act },
-            leo_sim: { running: false, url: FALLBACK_URLS.leo_sim },
-          };
-          renderCards();
-          return;
-        }
         try {
           const res = await fetch("/api/status");
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const json = await res.json();
           liveStatus = json.modules || {};
-        } catch (e) {
-          liveStatus = {};
+        } catch {
+          liveStatus = {
+            urbanization: { running: true, url: FALLBACK_URLS.urbanization },
+          };
         }
         renderCards();
       }
 
       async function openModule(id, btn) {
-        if (!isLocalHost) {
-          window.open(FALLBACK_URLS[id] || "#", "_blank", "noopener");
-          return;
-        }
         const origText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = "Launching…";
         try {
           const res = await fetch(`/api/launch/${id}`, { method: "POST" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const json = await res.json();
           if (json.url) {
             window.open(json.url, "_blank", "noopener");
+          } else if (FALLBACK_URLS[id]) {
+            window.open(FALLBACK_URLS[id], "_blank", "noopener");
+          } else {
+            alert("This module is not configured for the current deployment.");
           }
           await fetchStatus();
         } catch (e) {
@@ -358,6 +348,7 @@
         grid.innerHTML = MODULE_META.map((m) => {
           const st = liveStatus[m.id] || {};
           const isOnline = !!st.running;
+          const statusLabel = st.configured ? "HOSTED" : isOnline ? "ONLINE" : "STANDBY";
           const directUrl = st.url || "#";
 
           return `
@@ -369,7 +360,7 @@
                   </span>
                   <span class="font-mono text-[10px] flex items-center gap-1.5 ${isOnline ? "text-amber-300" : "text-stone-400"}">
                     <span class="h-1.5 w-1.5 rounded-full ${isOnline ? "bg-amber-400 animate-pulse" : "bg-stone-500"}"></span>
-                    ${isOnline ? "ONLINE" : "STANDBY"}
+                    ${statusLabel}
                   </span>
                 </div>
 
