@@ -96,7 +96,7 @@
               3D TELEMETRY ONLINE
             </div>
             <div class="text-stone-300">4 ACTIVE MODULES · TRACK A</div>
-            <div class="text-amber-300">PORTAL // 127.0.0.1:9000</div>
+            <div class="text-amber-300">ORBIT-TO-ECONOMY PORTAL</div>
           </div>
         </div>
       </header>
@@ -281,9 +281,27 @@
         },
       ];
 
+      const FALLBACK_URLS = {
+        urbanization: "https://dist-pi-ivory-36.vercel.app",
+        disaster: "http://127.0.0.1:8000",
+        eco_act: "http://127.0.0.1:9000/eco-act/tumkur_ai_dashboard.html",
+        leo_sim: "http://127.0.0.1:8502",
+      };
+      const isLocalHost = ["127.0.0.1", "localhost"].includes(window.location.hostname);
+
       let liveStatus = {};
 
       async function fetchStatus() {
+        if (!isLocalHost) {
+          liveStatus = {
+            urbanization: { running: true, url: FALLBACK_URLS.urbanization },
+            disaster: { running: false, url: FALLBACK_URLS.disaster },
+            eco_act: { running: false, url: FALLBACK_URLS.eco_act },
+            leo_sim: { running: false, url: FALLBACK_URLS.leo_sim },
+          };
+          renderCards();
+          return;
+        }
         try {
           const res = await fetch("/api/status");
           const json = await res.json();
@@ -295,6 +313,10 @@
       }
 
       async function openModule(id, btn) {
+        if (!isLocalHost) {
+          window.open(FALLBACK_URLS[id] || "#", "_blank", "noopener");
+          return;
+        }
         const origText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = "Launching…";
